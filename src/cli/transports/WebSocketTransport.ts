@@ -768,7 +768,7 @@ export class WebSocketTransport implements Transport {
     this.stopKeepaliveInterval()
 
     // In CCR sessions, session activity heartbeats handle keep-alives
-    if (isEnvTruthy(process.env.DEVFORGE_REMOTE)) {
+    if (isEnvTruthy(process.env.CODEPILOT_REMOTE)) {
       return
     }
 

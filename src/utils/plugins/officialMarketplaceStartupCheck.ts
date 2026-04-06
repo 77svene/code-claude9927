@@ -46,7 +46,7 @@ export type OfficialMarketplaceSkipReason =
  */
 export function isOfficialMarketplaceAutoInstallDisabled(): boolean {
   return isEnvTruthy(
-    process.env.DEVFORGE_DISABLE_OFFICIAL_MARKETPLACE_AUTOINSTALL,
+    process.env.CODEPILOT_DISABLE_OFFICIAL_MARKETPLACE_AUTOINSTALL,
   )
 }
 

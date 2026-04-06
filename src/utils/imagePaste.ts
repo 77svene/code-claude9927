@@ -32,9 +32,9 @@ function getClipboardCommands() {
   const platform = process.platform as SupportedPlatform
 
   // Platform-specific temporary file paths
-  // Use DEVFORGE_TMPDIR if set, otherwise fall back to platform defaults
+  // Use CODEPILOT_TMPDIR if set, otherwise fall back to platform defaults
   const baseTmpDir =
-    process.env.DEVFORGE_TMPDIR ||
+    process.env.CODEPILOT_TMPDIR ||
     (platform === 'win32' ? process.env.TEMP || 'C:\\Temp' : '/tmp')
   const screenshotFilename = 'claude_cli_latest_screenshot.png'
   const tempPaths: Record<SupportedPlatform, string> = {

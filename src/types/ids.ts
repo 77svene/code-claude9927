@@ -4,7 +4,7 @@
  */
 
 /**
- * A session ID uniquely identifies a DevForge session.
+ * A session ID uniquely identifies a CodePilot session.
  * Returned by getSessionId().
  */
 export type SessionId = string & { readonly __brand: 'SessionId' }

@@ -115,7 +115,7 @@ export function LogoV2() {
   useEffect(t2, t3);
   let t4;
   if ($[5] === Symbol.for("react.memo_cache_sentinel")) {
-    t4 = !hasReleaseNotes && !showOnboarding && !isEnvTruthy(process.env.DEVFORGE_FORCE_FULL_LOGO);
+    t4 = !hasReleaseNotes && !showOnboarding && !isEnvTruthy(process.env.CODEPILOT_FORCE_FULL_LOGO);
     $[5] = t4;
   } else {
     t4 = $[5];
@@ -176,7 +176,7 @@ export function LogoV2() {
     t10 = $[14];
   }
   const modelDisplayName = t10;
-  if (!hasReleaseNotes && !showOnboarding && !isEnvTruthy(process.env.DEVFORGE_FORCE_FULL_LOGO)) {
+  if (!hasReleaseNotes && !showOnboarding && !isEnvTruthy(process.env.CODEPILOT_FORCE_FULL_LOGO)) {
     let t11;
     let t12;
     let t13;
@@ -191,7 +191,7 @@ export function LogoV2() {
       t14 = ChannelsNoticeModule && <ChannelsNoticeModule.ChannelsNotice />;
       t15 = isDebugMode() && <Box paddingLeft={2} flexDirection="column"><Text color="warning">Debug mode enabled</Text><Text dimColor={true}>Logging to: {isDebugToStdErr() ? "stderr" : getDebugLogPath()}</Text></Box>;
       t16 = <EmergencyTip />;
-      t17 = process.env.DEVFORGE_TMUX_SESSION && <Box paddingLeft={2} flexDirection="column"><Text dimColor={true}>tmux session: {process.env.DEVFORGE_TMUX_SESSION}</Text><Text dimColor={true}>{process.env.DEVFORGE_TMUX_PREFIX_CONFLICTS ? `Detach: ${process.env.DEVFORGE_TMUX_PREFIX} ${process.env.DEVFORGE_TMUX_PREFIX} d (press prefix twice - Claude uses ${process.env.DEVFORGE_TMUX_PREFIX})` : `Detach: ${process.env.DEVFORGE_TMUX_PREFIX} d`}</Text></Box>;
+      t17 = process.env.CODEPILOT_TMUX_SESSION && <Box paddingLeft={2} flexDirection="column"><Text dimColor={true}>tmux session: {process.env.CODEPILOT_TMUX_SESSION}</Text><Text dimColor={true}>{process.env.CODEPILOT_TMUX_PREFIX_CONFLICTS ? `Detach: ${process.env.CODEPILOT_TMUX_PREFIX} ${process.env.CODEPILOT_TMUX_PREFIX} d (press prefix twice - Claude uses ${process.env.CODEPILOT_TMUX_PREFIX})` : `Detach: ${process.env.CODEPILOT_TMUX_PREFIX} d`}</Text></Box>;
       $[15] = t11;
       $[16] = t12;
       $[17] = t13;
@@ -248,8 +248,8 @@ export function LogoV2() {
   }
   const layoutMode = getLayoutMode(columns);
   const userTheme = resolveThemeSetting(getGlobalConfig().theme);
-  const borderTitle = ` ${color("claude", userTheme)("DevForge")} ${color("inactive", userTheme)(`v${version}`)} `;
-  const compactBorderTitle = color("claude", userTheme)(" DevForge ");
+  const borderTitle = ` ${color("claude", userTheme)("CodePilot")} ${color("inactive", userTheme)(`v${version}`)} `;
+  const compactBorderTitle = color("claude", userTheme)(" CodePilot ");
   if (layoutMode === "compact") {
     let welcomeMessage = formatWelcomeMessage(username);
     if (stringWidth(welcomeMessage) > columns - 4) {
@@ -462,7 +462,7 @@ export function LogoV2() {
     t31 = ChannelsNoticeModule && <ChannelsNoticeModule.ChannelsNotice />;
     t32 = isDebugMode() && <Box paddingLeft={2} flexDirection="column"><Text color="warning">Debug mode enabled</Text><Text dimColor={true}>Logging to: {isDebugToStdErr() ? "stderr" : getDebugLogPath()}</Text></Box>;
     t33 = <EmergencyTip />;
-    t34 = process.env.DEVFORGE_TMUX_SESSION && <Box paddingLeft={2} flexDirection="column"><Text dimColor={true}>tmux session: {process.env.DEVFORGE_TMUX_SESSION}</Text><Text dimColor={true}>{process.env.DEVFORGE_TMUX_PREFIX_CONFLICTS ? `Detach: ${process.env.DEVFORGE_TMUX_PREFIX} ${process.env.DEVFORGE_TMUX_PREFIX} d (press prefix twice - Claude uses ${process.env.DEVFORGE_TMUX_PREFIX})` : `Detach: ${process.env.DEVFORGE_TMUX_PREFIX} d`}</Text></Box>;
+    t34 = process.env.CODEPILOT_TMUX_SESSION && <Box paddingLeft={2} flexDirection="column"><Text dimColor={true}>tmux session: {process.env.CODEPILOT_TMUX_SESSION}</Text><Text dimColor={true}>{process.env.CODEPILOT_TMUX_PREFIX_CONFLICTS ? `Detach: ${process.env.CODEPILOT_TMUX_PREFIX} ${process.env.CODEPILOT_TMUX_PREFIX} d (press prefix twice - Claude uses ${process.env.CODEPILOT_TMUX_PREFIX})` : `Detach: ${process.env.CODEPILOT_TMUX_PREFIX} d`}</Text></Box>;
     $[75] = t29;
     $[76] = t30;
     $[77] = t31;

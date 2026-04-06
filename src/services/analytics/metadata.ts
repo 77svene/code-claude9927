@@ -103,7 +103,7 @@ export function isAnalyticsToolDetailsLoggingEnabled(
   mcpServerType: string | undefined,
   mcpServerBaseUrl: string | undefined,
 ): boolean {
-  if (process.env.DEVFORGE_ENTRYPOINT === 'local-agent') {
+  if (process.env.CODEPILOT_ENTRYPOINT === 'local-agent') {
     return true
   }
   if (mcpServerType === 'claudeai-proxy') {
@@ -484,8 +484,8 @@ export type EventMetadata = {
   sweBenchInstanceId: string
   sweBenchTaskId: string
   // Swarm/team agent identification for analytics attribution
-  agentId?: string // DEVFORGE_AGENT_ID (format: agentName@teamName) or subagent UUID
-  parentSessionId?: string // DEVFORGE_PARENT_SESSION_ID (team lead's session)
+  agentId?: string // CODEPILOT_AGENT_ID (format: agentName@teamName) or subagent UUID
+  parentSessionId?: string // CODEPILOT_PARENT_SESSION_ID (team lead's session)
   agentType?: 'teammate' | 'subagent' | 'standalone' // Distinguishes swarm teammates, Agent tool subagents, and standalone agents
   teamName?: string // Team name for swarm agents (from env var or AsyncLocalStorage)
   subscriptionType?: string // OAuth subscription tier (max, pro, enterprise, team)
@@ -583,8 +583,8 @@ const buildEnvContext = memoize(async (): Promise<EnvContext> => {
     platform: getHostPlatformForAnalytics(),
     // Raw process.platform so freebsd/openbsd/aix/sunos are visible in BQ.
     // getHostPlatformForAnalytics() buckets those into 'linux'; here we want
-    // the truth. DEVFORGE_HOST_PLATFORM still overrides for container/remote.
-    platformRaw: process.env.DEVFORGE_HOST_PLATFORM || process.platform,
+    // the truth. CODEPILOT_HOST_PLATFORM still overrides for container/remote.
+    platformRaw: process.env.CODEPILOT_HOST_PLATFORM || process.platform,
     arch: env.arch,
     nodeVersion: env.nodeVersion,
     terminal: envDynamic.terminal,
@@ -593,29 +593,29 @@ const buildEnvContext = memoize(async (): Promise<EnvContext> => {
     isRunningWithBun: env.isRunningWithBun(),
     isCi: isEnvTruthy(process.env.CI),
     isClaubbit: isEnvTruthy(process.env.CLAUBBIT),
-    isClaudeCodeRemote: isEnvTruthy(process.env.DEVFORGE_REMOTE),
-    isLocalAgentMode: process.env.DEVFORGE_ENTRYPOINT === 'local-agent',
+    isClaudeCodeRemote: isEnvTruthy(process.env.CODEPILOT_REMOTE),
+    isLocalAgentMode: process.env.CODEPILOT_ENTRYPOINT === 'local-agent',
     isConductor: env.isConductor(),
-    ...(process.env.DEVFORGE_REMOTE_ENVIRONMENT_TYPE && {
-      remoteEnvironmentType: process.env.DEVFORGE_REMOTE_ENVIRONMENT_TYPE,
+    ...(process.env.CODEPILOT_REMOTE_ENVIRONMENT_TYPE && {
+      remoteEnvironmentType: process.env.CODEPILOT_REMOTE_ENVIRONMENT_TYPE,
     }),
     // Gated by feature flag to prevent leaking "coworkerType" string in external builds
     ...(feature('COWORKER_TYPE_TELEMETRY')
-      ? process.env.DEVFORGE_COWORKER_TYPE
-        ? { coworkerType: process.env.DEVFORGE_COWORKER_TYPE }
+      ? process.env.CODEPILOT_COWORKER_TYPE
+        ? { coworkerType: process.env.CODEPILOT_COWORKER_TYPE }
         : {}
       : {}),
-    ...(process.env.DEVFORGE_CONTAINER_ID && {
-      claudeCodeContainerId: process.env.DEVFORGE_CONTAINER_ID,
+    ...(process.env.CODEPILOT_CONTAINER_ID && {
+      claudeCodeContainerId: process.env.CODEPILOT_CONTAINER_ID,
     }),
-    ...(process.env.DEVFORGE_REMOTE_SESSION_ID && {
-      claudeCodeRemoteSessionId: process.env.DEVFORGE_REMOTE_SESSION_ID,
+    ...(process.env.CODEPILOT_REMOTE_SESSION_ID && {
+      claudeCodeRemoteSessionId: process.env.CODEPILOT_REMOTE_SESSION_ID,
     }),
-    ...(process.env.DEVFORGE_TAGS && {
-      tags: process.env.DEVFORGE_TAGS,
+    ...(process.env.CODEPILOT_TAGS && {
+      tags: process.env.CODEPILOT_TAGS,
     }),
     isGithubAction: isEnvTruthy(process.env.GITHUB_ACTIONS),
-    isClaudeCodeAction: isEnvTruthy(process.env.DEVFORGE_ACTION),
+    isClaudeCodeAction: isEnvTruthy(process.env.CODEPILOT_ACTION),
     isClaudeAiAuth: isClaudeAISubscriber(),
     version: MACRO.VERSION,
     versionBase: getVersionBase(),
@@ -710,8 +710,8 @@ export async function getEventMetadata(
     userType: process.env.USER_TYPE || '',
     ...(betas.length > 0 ? { betas: betas } : {}),
     envContext,
-    ...(process.env.DEVFORGE_ENTRYPOINT && {
-      entrypoint: process.env.DEVFORGE_ENTRYPOINT,
+    ...(process.env.CODEPILOT_ENTRYPOINT && {
+      entrypoint: process.env.CODEPILOT_ENTRYPOINT,
     }),
     ...(process.env.CLAUDE_AGENT_SDK_VERSION && {
       agentSdkVersion: process.env.CLAUDE_AGENT_SDK_VERSION,

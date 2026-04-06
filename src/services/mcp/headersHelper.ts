@@ -65,8 +65,8 @@ export async function getMcpHeadersFromHelper(
       // (git credential-helper style). See deshaw/anthropic-issues#28.
       env: {
         ...process.env,
-        DEVFORGE_MCP_SERVER_NAME: serverName,
-        DEVFORGE_MCP_SERVER_URL: config.url,
+        CODEPILOT_MCP_SERVER_NAME: serverName,
+        CODEPILOT_MCP_SERVER_URL: config.url,
       },
     })
     if (execResult.code !== 0 || !execResult.stdout) {

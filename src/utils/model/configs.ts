@@ -4,7 +4,7 @@ import type { APIProvider } from './providers.js'
 export type ModelConfig = Record<APIProvider, ModelName>
 
 function localModel(): ModelName {
-  return process.env.DEVFORGE_MODEL || 'qwen3.5:9b'
+  return process.env.CODEPILOT_MODEL || 'qwen3.5:9b'
 }
 
 const LOCAL_MODEL_CONFIG: ModelConfig = {

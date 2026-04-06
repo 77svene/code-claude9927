@@ -35,7 +35,7 @@ export async function sendNotification(
   })
 }
 
-const DEFAULT_TITLE = 'DevForge'
+const DEFAULT_TITLE = 'CodePilot'
 
 async function sendToChannel(
   channel: string,

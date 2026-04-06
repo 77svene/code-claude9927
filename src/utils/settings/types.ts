@@ -8,7 +8,7 @@ import {
   PERMISSION_MODES,
 } from '../permissions/PermissionMode.js'
 import { MarketplaceSourceSchema } from '../plugins/schemas.js'
-import { DEVFORGE_SETTINGS_SCHEMA_URL } from './constants.js'
+import { CODEPILOT_SETTINGS_SCHEMA_URL } from './constants.js'
 import { PermissionRuleSchema } from './permissionValidation.js'
 
 // Re-export hook schemas and types from centralized location for backward compatibility
@@ -63,7 +63,7 @@ export const PermissionsSchema = lazySchema(() =>
             : EXTERNAL_PERMISSION_MODES,
         )
         .optional()
-        .describe('Default permission mode when DevForge needs access'),
+        .describe('Default permission mode when CodePilot needs access'),
       disableBypassPermissionsMode: z
         .enum(['disable'])
         .optional()
@@ -256,9 +256,9 @@ export const SettingsSchema = lazySchema(() =>
   z
     .object({
       $schema: z
-        .literal(DEVFORGE_SETTINGS_SCHEMA_URL)
+        .literal(CODEPILOT_SETTINGS_SCHEMA_URL)
         .optional()
-        .describe('JSON Schema reference for DevForge settings'),
+        .describe('JSON Schema reference for CodePilot settings'),
       apiKeyHelper: z
         .string()
         .optional()
@@ -277,11 +277,11 @@ export const SettingsSchema = lazySchema(() =>
         .describe(
           'Command to refresh GCP authentication (e.g., gcloud auth application-default login)',
         ),
-      // Gated so the SDK generator (which runs without DEVFORGE_ENABLE_XAA)
+      // Gated so the SDK generator (which runs without CODEPILOT_ENABLE_XAA)
       // doesn't surface this in GlobalClaudeSettings. Read via getXaaIdpSettings().
       // .passthrough() on the outer object keeps an existing settings.json key
       // alive across env-var-off sessions — it's just not schema-validated then.
-      ...(isEnvTruthy(process.env.DEVFORGE_ENABLE_XAA)
+      ...(isEnvTruthy(process.env.CODEPILOT_ENABLE_XAA)
         ? {
             xaaIdp: z
               .object({
@@ -291,7 +291,7 @@ export const SettingsSchema = lazySchema(() =>
                   .describe('IdP issuer URL for OIDC discovery'),
                 clientId: z
                   .string()
-                  .describe("DevForge's client_id registered at the IdP"),
+                  .describe("CodePilot's client_id registered at the IdP"),
                 callbackPort: z
                   .number()
                   .int()
@@ -332,7 +332,7 @@ export const SettingsSchema = lazySchema(() =>
         ),
       env: EnvironmentVariablesSchema()
         .optional()
-        .describe('Environment variables to set for DevForge sessions'),
+        .describe('Environment variables to set for CodePilot sessions'),
       // Attribution for commits and PRs
       attribution: z
         .object({
@@ -354,7 +354,7 @@ export const SettingsSchema = lazySchema(() =>
         .optional()
         .describe(
           'Customize attribution text for commits and PRs. ' +
-            'Each field defaults to the standard DevForge attribution if not set.',
+            'Each field defaults to the standard CodePilot attribution if not set.',
         ),
       includeCoAuthoredBy: z
         .boolean()
@@ -375,7 +375,7 @@ export const SettingsSchema = lazySchema(() =>
       model: z
         .string()
         .optional()
-        .describe('Override the default model used by DevForge'),
+        .describe('Override the default model used by CodePilot'),
       // Enterprise allowlist of models
       availableModels: z
         .array(z.string())

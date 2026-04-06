@@ -21,14 +21,14 @@ import {
 /**
  * Whether auto-memory features are enabled (memdir, agent memory, past session search).
  * Enabled by default. Priority chain (first defined wins):
- *   1. DEVFORGE_DISABLE_AUTO_MEMORY env var (1/true → OFF, 0/false → ON)
- *   2. DEVFORGE_SIMPLE (--bare) → OFF
- *   3. CCR without persistent storage → OFF (no DEVFORGE_REMOTE_MEMORY_DIR)
+ *   1. CODEPILOT_DISABLE_AUTO_MEMORY env var (1/true → OFF, 0/false → ON)
+ *   2. CODEPILOT_SIMPLE (--bare) → OFF
+ *   3. CCR without persistent storage → OFF (no CODEPILOT_REMOTE_MEMORY_DIR)
  *   4. autoMemoryEnabled in settings.json (supports project-level opt-out)
  *   5. Default: enabled
  */
 export function isAutoMemoryEnabled(): boolean {
-  const envVal = process.env.DEVFORGE_DISABLE_AUTO_MEMORY
+  const envVal = process.env.CODEPILOT_DISABLE_AUTO_MEMORY
   if (isEnvTruthy(envVal)) {
     return false
   }
@@ -38,12 +38,12 @@ export function isAutoMemoryEnabled(): boolean {
   // --bare / SIMPLE: prompts.ts already drops the memory section from the
   // system prompt via its SIMPLE early-return; this gate stops the other half
   // (extractMemories turn-end fork, autoDream, /remember, /dream, team sync).
-  if (isEnvTruthy(process.env.DEVFORGE_SIMPLE)) {
+  if (isEnvTruthy(process.env.CODEPILOT_SIMPLE)) {
     return false
   }
   if (
-    isEnvTruthy(process.env.DEVFORGE_REMOTE) &&
-    !process.env.DEVFORGE_REMOTE_MEMORY_DIR
+    isEnvTruthy(process.env.CODEPILOT_REMOTE) &&
+    !process.env.CODEPILOT_REMOTE_MEMORY_DIR
   ) {
     return false
   }
@@ -79,12 +79,12 @@ export function isExtractModeActive(): boolean {
 /**
  * Returns the base directory for persistent memory storage.
  * Resolution order:
- *   1. DEVFORGE_REMOTE_MEMORY_DIR env var (explicit override, set in CCR)
+ *   1. CODEPILOT_REMOTE_MEMORY_DIR env var (explicit override, set in CCR)
  *   2. ~/.claude (default config home)
  */
 export function getMemoryBaseDir(): string {
-  if (process.env.DEVFORGE_REMOTE_MEMORY_DIR) {
-    return process.env.DEVFORGE_REMOTE_MEMORY_DIR
+  if (process.env.CODEPILOT_REMOTE_MEMORY_DIR) {
+    return process.env.CODEPILOT_REMOTE_MEMORY_DIR
   }
   return getClaudeConfigHomeDir()
 }

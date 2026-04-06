@@ -57,7 +57,7 @@ export function logForDiagnosticsNoPII(
 }
 
 function getDiagnosticLogFile(): string | undefined {
-  return process.env.DEVFORGE_DIAGNOSTICS_FILE
+  return process.env.CODEPILOT_DIAGNOSTICS_FILE
 }
 
 /**

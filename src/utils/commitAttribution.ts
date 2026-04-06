@@ -171,7 +171,7 @@ export type AttributionData = {
  * Get the current client surface from environment.
  */
 export function getClientSurface(): string {
-  return process.env.DEVFORGE_ENTRYPOINT ?? 'cli'
+  return process.env.CODEPILOT_ENTRYPOINT ?? 'cli'
 }
 
 /**

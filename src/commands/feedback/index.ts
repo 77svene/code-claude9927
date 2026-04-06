@@ -7,13 +7,13 @@ const feedback = {
   aliases: ['bug'],
   type: 'local-jsx',
   name: 'feedback',
-  description: `Submit feedback about DevForge`,
+  description: `Submit feedback about CodePilot`,
   argumentHint: '[report]',
   isEnabled: () =>
     !(
-      isEnvTruthy(process.env.DEVFORGE_USE_BEDROCK) ||
-      isEnvTruthy(process.env.DEVFORGE_USE_VERTEX) ||
-      isEnvTruthy(process.env.DEVFORGE_USE_FOUNDRY) ||
+      isEnvTruthy(process.env.CODEPILOT_USE_BEDROCK) ||
+      isEnvTruthy(process.env.CODEPILOT_USE_VERTEX) ||
+      isEnvTruthy(process.env.CODEPILOT_USE_FOUNDRY) ||
       isEnvTruthy(process.env.DISABLE_FEEDBACK_COMMAND) ||
       isEnvTruthy(process.env.DISABLE_BUG_COMMAND) ||
       isEssentialTrafficOnly() ||

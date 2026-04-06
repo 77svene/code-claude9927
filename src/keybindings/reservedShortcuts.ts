@@ -11,7 +11,7 @@ export type ReservedShortcut = {
 }
 
 /**
- * Shortcuts that cannot be rebound - they are hardcoded in DevForge.
+ * Shortcuts that cannot be rebound - they are hardcoded in CodePilot.
  */
 export const NON_REBINDABLE: ReservedShortcut[] = [
   {

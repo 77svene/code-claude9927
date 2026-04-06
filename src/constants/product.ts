@@ -1,6 +1,6 @@
 export const PRODUCT_URL = ''
 
-// DevForge local model server URLs
+// CodePilot local model server URLs
 export const CLAUDE_AI_BASE_URL = 'http://localhost:11434'
 export const CLAUDE_AI_STAGING_BASE_URL = 'http://localhost:11434'
 export const CLAUDE_AI_LOCAL_BASE_URL = 'http://localhost:11434'
@@ -35,7 +35,7 @@ export function isRemoteSessionLocal(
 
 /**
  * Get the base URL for the local model server.
- * Always returns the local URL for DevForge.
+ * Always returns the local URL for CodePilot.
  */
 export function getClaudeAiBaseUrl(
   sessionId?: string,
@@ -46,7 +46,7 @@ export function getClaudeAiBaseUrl(
 
 /**
  * Get the full session URL for a remote session.
- * Returns an empty string stub for DevForge.
+ * Returns an empty string stub for CodePilot.
  */
 export function getRemoteSessionUrl(
   sessionId: string,

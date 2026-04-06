@@ -10,13 +10,13 @@ export type ColorModuleUnavailableReason = 'env'
 
 /**
  * Returns a static reason why the color-diff module is unavailable, or null if available.
- * 'env' = disabled via DEVFORGE_SYNTAX_HIGHLIGHT
+ * 'env' = disabled via CODEPILOT_SYNTAX_HIGHLIGHT
  *
  * The TS port of color-diff works in all build modes, so the only way to
  * disable it is via the env var.
  */
 export function getColorModuleUnavailableReason(): ColorModuleUnavailableReason | null {
-  if (isEnvDefinedFalsy(process.env.DEVFORGE_SYNTAX_HIGHLIGHT)) {
+  if (isEnvDefinedFalsy(process.env.CODEPILOT_SYNTAX_HIGHLIGHT)) {
     return 'env'
   }
   return null

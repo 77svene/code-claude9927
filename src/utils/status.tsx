@@ -255,7 +255,7 @@ export function buildAPIProviderProperties(): Property[] {
     const anthropicBaseUrl = process.env.ANTHROPIC_BASE_URL;
     if (anthropicBaseUrl) {
       properties.push({
-        label: 'DevForge base URL',
+        label: 'CodePilot base URL',
         value: anthropicBaseUrl
       });
     }
@@ -271,7 +271,7 @@ export function buildAPIProviderProperties(): Property[] {
       label: 'AWS region',
       value: getAWSRegion()
     });
-    if (isEnvTruthy(process.env.DEVFORGE_SKIP_BEDROCK_AUTH)) {
+    if (isEnvTruthy(process.env.CODEPILOT_SKIP_BEDROCK_AUTH)) {
       properties.push({
         value: 'AWS auth skipped'
       });
@@ -295,7 +295,7 @@ export function buildAPIProviderProperties(): Property[] {
       label: 'Default region',
       value: getDefaultVertexRegion()
     });
-    if (isEnvTruthy(process.env.DEVFORGE_SKIP_VERTEX_AUTH)) {
+    if (isEnvTruthy(process.env.CODEPILOT_SKIP_VERTEX_AUTH)) {
       properties.push({
         value: 'GCP auth skipped'
       });
@@ -315,7 +315,7 @@ export function buildAPIProviderProperties(): Property[] {
         value: foundryResource
       });
     }
-    if (isEnvTruthy(process.env.DEVFORGE_SKIP_FOUNDRY_AUTH)) {
+    if (isEnvTruthy(process.env.CODEPILOT_SKIP_FOUNDRY_AUTH)) {
       properties.push({
         value: 'Microsoft Foundry auth skipped'
       });
@@ -336,16 +336,16 @@ export function buildAPIProviderProperties(): Property[] {
     });
   }
   if (mtlsConfig) {
-    if (mtlsConfig.cert && process.env.DEVFORGE_CLIENT_CERT) {
+    if (mtlsConfig.cert && process.env.CODEPILOT_CLIENT_CERT) {
       properties.push({
         label: 'mTLS client cert',
-        value: process.env.DEVFORGE_CLIENT_CERT
+        value: process.env.CODEPILOT_CLIENT_CERT
       });
     }
-    if (mtlsConfig.key && process.env.DEVFORGE_CLIENT_KEY) {
+    if (mtlsConfig.key && process.env.CODEPILOT_CLIENT_KEY) {
       properties.push({
         label: 'mTLS client key',
-        value: process.env.DEVFORGE_CLIENT_KEY
+        value: process.env.CODEPILOT_CLIENT_KEY
       });
     }
   }

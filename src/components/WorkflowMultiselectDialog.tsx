@@ -18,10 +18,10 @@ type Props = {
 };
 const WORKFLOWS: WorkflowOption[] = [{
   value: 'claude' as const,
-  label: '@DevForge - Tag @claude in issues and PR comments'
+  label: '@CodePilot - Tag @claude in issues and PR comments'
 }, {
   value: 'claude-review' as const,
-  label: 'DevForge Review - Automated code review on new PRs'
+  label: 'CodePilot Review - Automated code review on new PRs'
 }];
 function renderInputGuide(exitState: ExitState): React.ReactNode {
   if (exitState.pending) {

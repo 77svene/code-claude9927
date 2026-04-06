@@ -341,7 +341,7 @@ export function initialize1PEventLogging(): void {
   // Build our own resource for 1P event logging with minimal attributes
   const platform = getPlatform()
   const attributes: Record<string, string> = {
-    [ATTR_SERVICE_NAME]: 'devforge',
+    [ATTR_SERVICE_NAME]: 'codepilot',
     [ATTR_SERVICE_VERSION]: MACRO.VERSION,
   }
 
@@ -383,7 +383,7 @@ export function initialize1PEventLogging(): void {
   // because logs.getLogger() returns a logger from the global provider, which is
   // separate and used for customer telemetry.
   firstPartyEventLogger = firstPartyEventLoggerProvider.getLogger(
-    'com.devforge.events',
+    'com.codepilot.events',
     MACRO.VERSION,
   )
 }

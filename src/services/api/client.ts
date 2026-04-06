@@ -1,20 +1,20 @@
 import { getProxyFetchOptions } from 'src/utils/proxy.js'
 import { getUserAgent } from 'src/utils/http.js'
 
-export const CLIENT_REQUEST_ID_HEADER = 'x-devforge-request-id'
+export const CLIENT_REQUEST_ID_HEADER = 'x-codepilot-request-id'
 
-export type DevForgeClientConfig = {
+export type CodePilotClientConfig = {
   baseURL: string
   apiKey: string
   model: string
   timeout: number
 }
 
-export function getDevForgeClient(): DevForgeClientConfig {
+export function getCodePilotClient(): CodePilotClientConfig {
   return {
-    baseURL: process.env.DEVFORGE_API_BASE ?? 'http://localhost:11434/v1',
-    apiKey: process.env.DEVFORGE_API_KEY ?? '',
-    model: process.env.DEVFORGE_MODEL ?? 'qwen3.5:9b',
+    baseURL: process.env.CODEPILOT_API_BASE ?? 'http://localhost:11434/v1',
+    apiKey: process.env.CODEPILOT_API_KEY ?? '',
+    model: process.env.CODEPILOT_MODEL ?? 'qwen3.5:9b',
     timeout: Number(process.env.API_TIMEOUT_MS ?? 120000),
   }
 }
@@ -31,7 +31,7 @@ export function getCustomHeaders(): Record<string, string> {
 }
 
 export async function fetchCompletion(
-  config: DevForgeClientConfig,
+  config: CodePilotClientConfig,
   body: unknown,
   signal?: AbortSignal,
 ): Promise<Response> {

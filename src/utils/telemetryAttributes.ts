@@ -57,7 +57,7 @@ export function getTelemetryAttributes(): Attributes {
     ) {
       attributes['user.account_uuid'] = accountUuid
       attributes['user.account_id'] =
-        process.env.DEVFORGE_ACCOUNT_TAGGED_ID ||
+        process.env.CODEPILOT_ACCOUNT_TAGGED_ID ||
         toTaggedId('user', accountUuid)
     }
   }

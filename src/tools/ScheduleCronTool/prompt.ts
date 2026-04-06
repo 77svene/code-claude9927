@@ -26,16 +26,16 @@ export const DEFAULT_MAX_AGE_DAYS =
  *
  * The default is `true` — /loop is GA (announced in changelog). GrowthBook
  * is disabled for Bedrock/Vertex/Foundry and when DISABLE_TELEMETRY /
- * DEVFORGE_DISABLE_NONESSENTIAL_TRAFFIC are set; a `false` default would
+ * CODEPILOT_DISABLE_NONESSENTIAL_TRAFFIC are set; a `false` default would
  * break /loop for those users (GH #31759). The GB gate now serves purely as
  * a fleet-wide kill switch — flipping it to `false` stops already-running
  * schedulers on their next isKilled poll tick, not just new ones.
  *
- * `DEVFORGE_DISABLE_CRON` is a local override that wins over GB.
+ * `CODEPILOT_DISABLE_CRON` is a local override that wins over GB.
  */
 export function isKairosCronEnabled(): boolean {
   return feature('AGENT_TRIGGERS')
-    ? !isEnvTruthy(process.env.DEVFORGE_DISABLE_CRON) &&
+    ? !isEnvTruthy(process.env.CODEPILOT_DISABLE_CRON) &&
         getFeatureValue_CACHED_WITH_REFRESH(
           'tengu_kairos_cron',
           true,
@@ -50,7 +50,7 @@ export function isKairosCronEnabled(): boolean {
  * the call() site, leaving session-only cron (in-memory, GA) untouched.
  *
  * Defaults to `true` so Bedrock/Vertex/Foundry and DISABLE_TELEMETRY users get
- * durable cron. Does NOT consult DEVFORGE_DISABLE_CRON (that kills the whole
+ * durable cron. Does NOT consult CODEPILOT_DISABLE_CRON (that kills the whole
  * scheduler via isKairosCronEnabled).
  */
 export function isDurableCronEnabled(): boolean {

@@ -72,7 +72,7 @@ function isExecutable(shellPath: string): boolean {
  */
 export async function findSuitableShell(): Promise<string> {
   // Check for explicit shell override first
-  const shellOverride = process.env.DEVFORGE_SHELL
+  const shellOverride = process.env.CODEPILOT_SHELL
   if (shellOverride) {
     // Validate it's a supported shell type
     const isSupported =
@@ -83,7 +83,7 @@ export async function findSuitableShell(): Promise<string> {
     } else {
       // Note, if we ever want to add support for new shells here we'll need to update or Bash tool parsing to account for this
       logForDebugging(
-        `DEVFORGE_SHELL="${shellOverride}" is not a valid bash/zsh path, falling back to detection`,
+        `CODEPILOT_SHELL="${shellOverride}" is not a valid bash/zsh path, falling back to detection`,
       )
     }
   }
@@ -127,7 +127,7 @@ export async function findSuitableShell(): Promise<string> {
   // If no valid shell found, throw a helpful error
   if (!shellPath) {
     const errorMsg =
-      'No suitable shell found. DevForge requires a Posix shell environment. ' +
+      'No suitable shell found. CodePilot requires a Posix shell environment. ' +
       'Please ensure you have a valid shell installed and the SHELL environment variable set.'
     logError(new Error(errorMsg))
     throw new Error(errorMsg)
@@ -202,7 +202,7 @@ export async function exec(
 
   // Sandbox temp directory - use per-user directory name to prevent multi-user permission conflicts
   const sandboxTmpDir = posixJoin(
-    process.env.DEVFORGE_TMPDIR || '/tmp',
+    process.env.CODEPILOT_TMPDIR || '/tmp',
     getClaudeTempDirName(),
   )
 
@@ -232,7 +232,7 @@ export async function exec(
       cwd = fallback
     } catch {
       return createFailedCommand(
-        `Working directory "${cwd}" no longer exists. Please restart DevForge from an existing directory.`,
+        `Working directory "${cwd}" no longer exists. Please restart CodePilot from an existing directory.`,
       )
     }
   }
@@ -322,7 +322,7 @@ export async function exec(
         ...envOverrides,
         ...(process.env.USER_TYPE === 'ant'
           ? {
-              DEVFORGE_SESSION_ID: getSessionId(),
+              CODEPILOT_SESSION_ID: getSessionId(),
             }
           : {}),
       },

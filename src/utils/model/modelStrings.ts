@@ -7,7 +7,7 @@ import { ALL_MODEL_CONFIGS, type ModelKey } from './configs.js'
 export type ModelStrings = Record<ModelKey, string>
 
 export function getModelStrings(): ModelStrings {
-  const model = process.env.DEVFORGE_MODEL || 'qwen3.5:9b'
+  const model = process.env.CODEPILOT_MODEL || 'qwen3.5:9b'
   const out = {} as ModelStrings
   for (const key of Object.keys(ALL_MODEL_CONFIGS) as ModelKey[]) {
     out[key] = model

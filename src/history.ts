@@ -32,7 +32,7 @@ type StoredPastedContent = {
 }
 
 /**
- * DevForge parses history for pasted content references to match back to
+ * CodePilot parses history for pasted content references to match back to
  * pasted content. The references look like:
  *   Text: [Pasted text #1 +10 lines]
  *   Image: [Image #2]
@@ -409,9 +409,9 @@ async function addToPromptHistory(
 }
 
 export function addToHistory(command: HistoryEntry | string): void {
-  // Skip history when running in a tmux session spawned by DevForge's Tungsten tool.
+  // Skip history when running in a tmux session spawned by CodePilot's Tungsten tool.
   // This prevents verification/test sessions from polluting the user's real command history.
-  if (isEnvTruthy(process.env.DEVFORGE_SKIP_PROMPT_HISTORY)) {
+  if (isEnvTruthy(process.env.CODEPILOT_SKIP_PROMPT_HISTORY)) {
     return
   }
 

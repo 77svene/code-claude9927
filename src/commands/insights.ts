@@ -377,7 +377,7 @@ const LABEL_MAP: Record<string, string> = {
   wrong_approach: 'Wrong Approach',
   buggy_code: 'Buggy Code',
   user_rejected_action: 'User Rejected Action',
-  claude_got_blocked: 'DevForge Got Blocked',
+  claude_got_blocked: 'CodePilot Got Blocked',
   user_stopped_early: 'User Stopped Early',
   wrong_file_or_location: 'Wrong File/Location',
   excessive_changes: 'Excessive Changes',
@@ -427,13 +427,13 @@ function getSessionMetaDir(): string {
   return join(getDataDir(), 'session-meta')
 }
 
-const FACET_EXTRACTION_PROMPT = `Analyze this DevForge session and extract structured facets.
+const FACET_EXTRACTION_PROMPT = `Analyze this CodePilot session and extract structured facets.
 
 CRITICAL GUIDELINES:
 
 1. **goal_categories**: Count ONLY what the USER explicitly asked for.
-   - DO NOT count DevForge's autonomous codebase exploration
-   - DO NOT count work DevForge decided to do on its own
+   - DO NOT count CodePilot's autonomous codebase exploration
+   - DO NOT count work CodePilot decided to do on its own
    - ONLY count when user says "can you...", "please...", "I need...", "let's..."
 
 2. **user_satisfaction_counts**: Base ONLY on explicit user signals.
@@ -444,7 +444,7 @@ CRITICAL GUIDELINES:
    - "this is broken", "I give up" → frustrated
 
 3. **friction_counts**: Be specific about what went wrong.
-   - misunderstood_request: DevForge interpreted incorrectly
+   - misunderstood_request: CodePilot interpreted incorrectly
    - wrong_approach: Right goal, wrong solution method
    - buggy_code: Code didn't work correctly
    - user_rejected_action: User said no/stop to a tool call
@@ -867,9 +867,9 @@ function formatTranscriptForFacets(log: LogOption): string {
   return lines.join('\n')
 }
 
-const SUMMARIZE_CHUNK_PROMPT = `Summarize this portion of a DevForge session transcript. Focus on:
+const SUMMARIZE_CHUNK_PROMPT = `Summarize this portion of a CodePilot session transcript. Focus on:
 1. What the user asked for
-2. What DevForge did (tools used, files modified)
+2. What CodePilot did (tools used, files modified)
 3. Any friction or issues
 4. The outcome
 
@@ -1055,7 +1055,7 @@ RESPOND WITH ONLY A VALID JSON OBJECT matching this schema:
 }
 
 /**
- * Detects multi-devforging (using multiple DevForge sessions concurrently).
+ * Detects multi-devforging (using multiple CodePilot sessions concurrently).
  * Uses a sliding window to find the pattern: session1 -> session2 -> session1
  * within a 30-minute window.
  */
@@ -1085,7 +1085,7 @@ export function detectMultiClauding(
 
   allSessionMessages.sort((a, b) => a.ts - b.ts)
 
-  const multiDevForgeSessionPairs = new Set<string>()
+  const multiCodePilotSessionPairs = new Set<string>()
   const messagesDuringMulticlaude = new Set<string>()
 
   // Sliding window: sessionLastIndex tracks the most recent index for each session
@@ -1114,7 +1114,7 @@ export function detectMultiClauding(
         const between = allSessionMessages[j]!
         if (between.sessionId !== msg.sessionId) {
           const pair = [msg.sessionId, between.sessionId].sort().join(':')
-          multiDevForgeSessionPairs.add(pair)
+          multiCodePilotSessionPairs.add(pair)
           messagesDuringMulticlaude.add(
             `${allSessionMessages[prevIndex]!.ts}:${msg.sessionId}`,
           )
@@ -1129,14 +1129,14 @@ export function detectMultiClauding(
   }
 
   const sessionsWithOverlaps = new Set<string>()
-  for (const pair of multiDevForgeSessionPairs) {
+  for (const pair of multiCodePilotSessionPairs) {
     const [s1, s2] = pair.split(':')
     if (s1) sessionsWithOverlaps.add(s1)
     if (s2) sessionsWithOverlaps.add(s2)
   }
 
   return {
-    overlap_events: multiDevForgeSessionPairs.size,
+    overlap_events: multiCodePilotSessionPairs.size,
     sessions_involved: sessionsWithOverlaps.size,
     user_messages_during: messagesDuringMulticlaude.size,
   }
@@ -1336,12 +1336,12 @@ type InsightSection = {
 const INSIGHT_SECTIONS: InsightSection[] = [
   {
     name: 'project_areas',
-    prompt: `Analyze this DevForge usage data and identify project areas.
+    prompt: `Analyze this CodePilot usage data and identify project areas.
 
 RESPOND WITH ONLY A VALID JSON OBJECT:
 {
   "areas": [
-    {"name": "Area name", "session_count": N, "description": "2-3 sentences about what was worked on and how DevForge was used."}
+    {"name": "Area name", "session_count": N, "description": "2-3 sentences about what was worked on and how CodePilot was used."}
   ]
 }
 
@@ -1350,18 +1350,18 @@ Include 4-5 areas. Skip internal CC operations.`,
   },
   {
     name: 'interaction_style',
-    prompt: `Analyze this DevForge usage data and describe the user's interaction style.
+    prompt: `Analyze this CodePilot usage data and describe the user's interaction style.
 
 RESPOND WITH ONLY A VALID JSON OBJECT:
 {
-  "narrative": "2-3 paragraphs analyzing HOW the user interacts with DevForge. Use second person 'you'. Describe patterns: iterate quickly vs detailed upfront specs? Interrupt often or let DevForge run? Include specific examples. Use **bold** for key insights.",
+  "narrative": "2-3 paragraphs analyzing HOW the user interacts with CodePilot. Use second person 'you'. Describe patterns: iterate quickly vs detailed upfront specs? Interrupt often or let CodePilot run? Include specific examples. Use **bold** for key insights.",
   "key_pattern": "One sentence summary of most distinctive interaction style"
 }`,
     maxTokens: 8192,
   },
   {
     name: 'what_works',
-    prompt: `Analyze this DevForge usage data and identify what's working well for this user. Use second person ("you").
+    prompt: `Analyze this CodePilot usage data and identify what's working well for this user. Use second person ("you").
 
 RESPOND WITH ONLY A VALID JSON OBJECT:
 {
@@ -1376,7 +1376,7 @@ Include 3 impressive workflows.`,
   },
   {
     name: 'friction_analysis',
-    prompt: `Analyze this DevForge usage data and identify friction points for this user. Use second person ("you").
+    prompt: `Analyze this CodePilot usage data and identify friction points for this user. Use second person ("you").
 
 RESPOND WITH ONLY A VALID JSON OBJECT:
 {
@@ -1391,10 +1391,10 @@ Include 3 friction categories with 2 examples each.`,
   },
   {
     name: 'suggestions',
-    prompt: `Analyze this DevForge usage data and suggest improvements.
+    prompt: `Analyze this CodePilot usage data and suggest improvements.
 
 ## CC FEATURES REFERENCE (pick from these for features_to_try):
-1. **MCP Servers**: Connect DevForge to external tools, databases, and APIs via Model Context Protocol.
+1. **MCP Servers**: Connect CodePilot to external tools, databases, and APIs via Model Context Protocol.
    - How to use: Run \`claude mcp add <server-name> -- <command>\`
    - Good for: database queries, Slack integration, GitHub issue lookup, connecting to internal APIs
 
@@ -1406,12 +1406,12 @@ Include 3 friction categories with 2 examples each.`,
    - How to use: Add to \`.claude/settings.json\` under "hooks" key.
    - Good for: auto-formatting code, running type checks, enforcing conventions
 
-4. **Headless Mode**: Run DevForge non-interactively from scripts and CI/CD.
+4. **Headless Mode**: Run CodePilot non-interactively from scripts and CI/CD.
    - How to use: \`claude -p "fix lint errors" --allowedTools "Edit,Read,Bash"\`
    - Good for: CI/CD integration, batch code fixes, automated reviews
 
-5. **Task Agents**: DevForge spawns focused sub-agents for complex exploration or parallel work.
-   - How to use: DevForge auto-invokes when helpful, or ask "use an agent to explore X"
+5. **Task Agents**: CodePilot spawns focused sub-agents for complex exploration or parallel work.
+   - How to use: CodePilot auto-invokes when helpful, or ask "use an agent to explore X"
    - Good for: codebase exploration, understanding complex systems
 
 RESPOND WITH ONLY A VALID JSON OBJECT:
@@ -1427,14 +1427,14 @@ RESPOND WITH ONLY A VALID JSON OBJECT:
   ]
 }
 
-IMPORTANT for claude_md_additions: PRIORITIZE instructions that appear MULTIPLE TIMES in the user data. If user told DevForge the same thing in 2+ sessions (e.g., 'always run tests', 'use TypeScript'), that's a PRIME candidate - they shouldn't have to repeat themselves.
+IMPORTANT for claude_md_additions: PRIORITIZE instructions that appear MULTIPLE TIMES in the user data. If user told CodePilot the same thing in 2+ sessions (e.g., 'always run tests', 'use TypeScript'), that's a PRIME candidate - they shouldn't have to repeat themselves.
 
 IMPORTANT for features_to_try: Pick 2-3 from the CC FEATURES REFERENCE above. Include 2-3 items for each category.`,
     maxTokens: 8192,
   },
   {
     name: 'on_the_horizon',
-    prompt: `Analyze this DevForge usage data and identify future opportunities.
+    prompt: `Analyze this CodePilot usage data and identify future opportunities.
 
 RESPOND WITH ONLY A VALID JSON OBJECT:
 {
@@ -1451,7 +1451,7 @@ Include 3 opportunities. Think BIG - autonomous workflows, parallel agents, iter
     ? [
         {
           name: 'cc_team_improvements',
-          prompt: `Analyze this DevForge usage data and suggest product improvements for the CC team.
+          prompt: `Analyze this CodePilot usage data and suggest product improvements for the CC team.
 
 RESPOND WITH ONLY A VALID JSON OBJECT:
 {
@@ -1465,7 +1465,7 @@ Include 2-3 improvements based on friction patterns observed.`,
         },
         {
           name: 'model_behavior_improvements',
-          prompt: `Analyze this DevForge usage data and suggest model behavior improvements.
+          prompt: `Analyze this CodePilot usage data and suggest model behavior improvements.
 
 RESPOND WITH ONLY A VALID JSON OBJECT:
 {
@@ -1481,7 +1481,7 @@ Include 2-3 improvements based on friction patterns observed.`,
     : []),
   {
     name: 'fun_ending',
-    prompt: `Analyze this DevForge usage data and find a memorable moment.
+    prompt: `Analyze this CodePilot usage data and find a memorable moment.
 
 RESPOND WITH ONLY A VALID JSON OBJECT:
 {
@@ -1735,15 +1735,15 @@ async function generateParallelInsights(
       .join('\n') || ''
 
   // Now generate "At a Glance" with access to other sections' outputs
-  const atAGlancePrompt = `You're writing an "At a Glance" summary for a DevForge usage insights report for DevForge users. The goal is to help them understand their usage and improve how they can use DevForge better, especially as models improve.
+  const atAGlancePrompt = `You're writing an "At a Glance" summary for a CodePilot usage insights report for CodePilot users. The goal is to help them understand their usage and improve how they can use CodePilot better, especially as models improve.
 
 Use this 4-part structure:
 
-1. **What's working** - What is the user's unique style of interacting with DevForge and what are some impactful things they've done? You can include one or two details, but keep it high level since things might not be fresh in the user's memory. Don't be fluffy or overly complimentary. Also, don't focus on the tool calls they use.
+1. **What's working** - What is the user's unique style of interacting with CodePilot and what are some impactful things they've done? You can include one or two details, but keep it high level since things might not be fresh in the user's memory. Don't be fluffy or overly complimentary. Also, don't focus on the tool calls they use.
 
-2. **What's hindering you** - Split into (a) DevForge's fault (misunderstandings, wrong approaches, bugs) and (b) user-side friction (not providing enough context, environment issues -- ideally more general than just one project). Be honest but constructive.
+2. **What's hindering you** - Split into (a) CodePilot's fault (misunderstandings, wrong approaches, bugs) and (b) user-side friction (not providing enough context, environment issues -- ideally more general than just one project). Be honest but constructive.
 
-3. **Quick wins to try** - Specific DevForge features they could try from the examples below, or a workflow technique if you think it's really compelling. (Avoid stuff like "Ask DevForge to confirm before taking actions" or "Type out more context up front" which are less compelling.)
+3. **Quick wins to try** - Specific CodePilot features they could try from the examples below, or a workflow technique if you think it's really compelling. (Avoid stuff like "Ask CodePilot to confirm before taking actions" or "Type out more context up front" which are less compelling.)
 
 4. **Ambitious workflows for better models** - As we move to much more capable models over the next 3-6 months, what should they prepare for? What workflows that seem impossible now will become possible? Draw from the appropriate section below.
 
@@ -2006,7 +2006,7 @@ function generateHtmlReport(
   const interactionStyle = insights.interaction_style
   const interactionHtml = interactionStyle?.narrative
     ? `
-    <h2 id="section-usage">How You Use DevForge</h2>
+    <h2 id="section-usage">How You Use CodePilot</h2>
     <div class="narrative">
       ${markdownToHtml(interactionStyle.narrative)}
       ${interactionStyle.key_pattern ? `<div class="key-insight"><strong>Key pattern:</strong> ${escapeHtml(interactionStyle.key_pattern)}</div>` : ''}
@@ -2070,9 +2070,9 @@ function generateHtmlReport(
     <h2 id="section-features">Existing CC Features to Try</h2>
     <div class="claude-md-section">
       <h3>Suggested CLAUDE.md Additions</h3>
-      <p style="font-size: 12px; color: #64748b; margin-bottom: 12px;">Just copy this into DevForge to add it to your CLAUDE.md.</p>
+      <p style="font-size: 12px; color: #64748b; margin-bottom: 12px;">Just copy this into CodePilot to add it to your CLAUDE.md.</p>
       <div class="claude-md-actions">
-        <button class="copy-all-btn" onclick="copyAllCheckedDevForgeMd()">Copy All Checked</button>
+        <button class="copy-all-btn" onclick="copyAllCheckedCodePilotMd()">Copy All Checked</button>
       </div>
       ${suggestions.claude_md_additions
         .map(
@@ -2095,7 +2095,7 @@ function generateHtmlReport(
     ${
       suggestions.features_to_try && suggestions.features_to_try.length > 0
         ? `
-    <p style="font-size: 13px; color: #64748b; margin-bottom: 12px;">Just copy this into DevForge and it'll set it up for you.</p>
+    <p style="font-size: 13px; color: #64748b; margin-bottom: 12px;">Just copy this into CodePilot and it'll set it up for you.</p>
     <div class="features-section">
       ${suggestions.features_to_try
         .map(
@@ -2129,8 +2129,8 @@ function generateHtmlReport(
     ${
       suggestions.usage_patterns && suggestions.usage_patterns.length > 0
         ? `
-    <h2 id="section-patterns">New Ways to Use DevForge</h2>
-    <p style="font-size: 13px; color: #64748b; margin-bottom: 12px;">Just copy this into DevForge and it'll walk you through it.</p>
+    <h2 id="section-patterns">New Ways to Use CodePilot</h2>
+    <p style="font-size: 13px; color: #64748b; margin-bottom: 12px;">Just copy this into CodePilot and it'll walk you through it.</p>
     <div class="patterns-section">
       ${suggestions.usage_patterns
         .map(
@@ -2143,7 +2143,7 @@ function generateHtmlReport(
             pat.copyable_prompt
               ? `
           <div class="copyable-prompt-section">
-            <div class="prompt-label">Paste into DevForge:</div>
+            <div class="prompt-label">Paste into CodePilot:</div>
             <div class="copyable-prompt-row">
               <code class="copyable-prompt">${escapeHtml(pat.copyable_prompt)}</code>
               <button class="copy-btn" onclick="copyText(this)">Copy</button>
@@ -2178,7 +2178,7 @@ function generateHtmlReport(
           <div class="horizon-title">${escapeHtml(opp.title || '')}</div>
           <div class="horizon-possible">${escapeHtml(opp.whats_possible || '')}</div>
           ${opp.how_to_try ? `<div class="horizon-tip"><strong>Getting started:</strong> ${escapeHtml(opp.how_to_try)}</div>` : ''}
-          ${opp.copyable_prompt ? `<div class="pattern-prompt"><div class="prompt-label">Paste into DevForge:</div><code>${escapeHtml(opp.copyable_prompt)}</code><button class="copy-btn" onclick="copyText(this)">Copy</button></div>` : ''}
+          ${opp.copyable_prompt ? `<div class="pattern-prompt"><div class="prompt-label">Paste into CodePilot:</div><code>${escapeHtml(opp.copyable_prompt)}</code><button class="copy-btn" onclick="copyText(this)">Copy</button></div>` : ''}
         </div>
       `,
         )
@@ -2406,7 +2406,7 @@ function generateHtmlReport(
         });
       }
     }
-    function copyAllCheckedDevForgeMd() {
+    function copyAllCheckedCodePilotMd() {
       const checkboxes = document.querySelectorAll('.cmd-checkbox:checked');
       const texts = [];
       checkboxes.forEach(cb => {
@@ -2485,13 +2485,13 @@ function generateHtmlReport(
 <html>
 <head>
   <meta charset="utf-8">
-  <title>DevForge Insights</title>
+  <title>CodePilot Insights</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>${css}</style>
 </head>
 <body>
   <div class="container">
-    <h1>DevForge Insights</h1>
+    <h1>CodePilot Insights</h1>
     <p class="subtitle">${data.total_messages.toLocaleString()} messages across ${data.total_sessions} sessions${data.total_sessions_scanned && data.total_sessions_scanned > data.total_sessions ? ` (${data.total_sessions_scanned.toLocaleString()} total)` : ''} | ${data.date_range.start} to ${data.date_range.end}</p>
 
     ${atAGlanceHtml}
@@ -2557,7 +2557,7 @@ function generateHtmlReport(
         data.multi_clauding.overlap_events === 0
           ? `
         <p style="font-size: 14px; color: #64748b; padding: 8px 0;">
-          No parallel session usage detected. You typically work with one DevForge session at a time.
+          No parallel session usage detected. You typically work with one CodePilot session at a time.
         </p>
       `
           : `
@@ -2576,7 +2576,7 @@ function generateHtmlReport(
           </div>
         </div>
         <p style="font-size: 13px; color: #475569; margin-top: 12px;">
-          You run multiple DevForge sessions simultaneously. Multi-clauding is detected when sessions
+          You run multiple CodePilot sessions simultaneously. Multi-clauding is detected when sessions
           overlap in time, suggesting parallel workflows.
         </p>
       `
@@ -2610,7 +2610,7 @@ function generateHtmlReport(
 
     <div class="charts-row">
       <div class="chart-card">
-        <div class="chart-title">What Helped Most (DevForge's Capabilities)</div>
+        <div class="chart-title">What Helped Most (CodePilot's Capabilities)</div>
         ${generateBarChart(data.success, '#16a34a')}
       </div>
       <div class="chart-card">
@@ -3039,7 +3039,7 @@ function safeKeys(obj: Record<string, unknown> | undefined | null): string[] {
 const usageReport: Command = {
   type: 'prompt',
   name: 'insights',
-  description: 'Generate a report analyzing your DevForge sessions',
+  description: 'Generate a report analyzing your CodePilot sessions',
   contentLength: 0, // Dynamic content
   progressMessage: 'analyzing your sessions',
   source: 'builtin',
@@ -3141,7 +3141,7 @@ ${atAGlance.quick_wins ? `**Quick wins to try:** ${atAGlance.quick_wins} See _Fe
 ${atAGlance.ambitious_workflows ? `**Ambitious workflows:** ${atAGlance.ambitious_workflows} See _On the Horizon_.` : ''}`
       : '_No insights generated_'
 
-    const header = `# DevForge Insights
+    const header = `# CodePilot Insights
 
 ${stats}
 ${data.date_range.start} to ${data.date_range.end}
@@ -3156,7 +3156,7 @@ Your full shareable insights report is ready: ${reportUrl}${uploadHint}`
     return [
       {
         type: 'text',
-        text: `The user just ran /insights to generate a usage report analyzing their DevForge sessions.
+        text: `The user just ran /insights to generate a usage report analyzing their CodePilot sessions.
 
 Here is the full insights data:
 ${jsonStringify(insights, null, 2)}

@@ -2,7 +2,7 @@ import { feature } from 'bun:bundle'
 import { getIsNonInteractiveSession } from '../../bootstrap/state.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../../services/analytics/growthbook.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
-import { DEVFORGE_GUIDE_AGENT } from './built-in/claudeCodeGuideAgent.js'
+import { CODEPILOT_GUIDE_AGENT } from './built-in/claudeCodeGuideAgent.js'
 import { EXPLORE_AGENT } from './built-in/exploreAgent.js'
 import { GENERAL_PURPOSE_AGENT } from './built-in/generalPurposeAgent.js'
 import { PLAN_AGENT } from './built-in/planAgent.js'
@@ -33,7 +33,7 @@ export function getBuiltInAgents(): AgentDefinition[] {
   // issues at module init time. The coordinatorMode module depends on tools
   // which depend on AgentTool which imports this file.
   if (feature('COORDINATOR_MODE')) {
-    if (isEnvTruthy(process.env.DEVFORGE_COORDINATOR_MODE)) {
+    if (isEnvTruthy(process.env.CODEPILOT_COORDINATOR_MODE)) {
       /* eslint-disable @typescript-eslint/no-require-imports */
       const { getCoordinatorAgents } =
         require('../../coordinator/workerAgent.js') as typeof import('../../coordinator/workerAgent.js')
@@ -53,12 +53,12 @@ export function getBuiltInAgents(): AgentDefinition[] {
 
   // Include Code Guide agent for non-SDK entrypoints
   const isNonSdkEntrypoint =
-    process.env.DEVFORGE_ENTRYPOINT !== 'sdk-ts' &&
-    process.env.DEVFORGE_ENTRYPOINT !== 'sdk-py' &&
-    process.env.DEVFORGE_ENTRYPOINT !== 'sdk-cli'
+    process.env.CODEPILOT_ENTRYPOINT !== 'sdk-ts' &&
+    process.env.CODEPILOT_ENTRYPOINT !== 'sdk-py' &&
+    process.env.CODEPILOT_ENTRYPOINT !== 'sdk-cli'
 
   if (isNonSdkEntrypoint) {
-    agents.push(DEVFORGE_GUIDE_AGENT)
+    agents.push(CODEPILOT_GUIDE_AGENT)
   }
 
   if (

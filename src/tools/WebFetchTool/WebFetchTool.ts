@@ -147,7 +147,7 @@ export const WebFetchTool = buildTool({
     if (askRule) {
       return {
         behavior: 'ask',
-        message: `DevForge requested permissions to use ${WebFetchTool.name}, but you haven't granted it yet.`,
+        message: `CodePilot requested permissions to use ${WebFetchTool.name}, but you haven't granted it yet.`,
         decisionReason: {
           type: 'rule',
           rule: askRule,
@@ -174,7 +174,7 @@ export const WebFetchTool = buildTool({
 
     return {
       behavior: 'ask',
-      message: `DevForge requested permissions to use ${WebFetchTool.name}, but you haven't granted it yet.`,
+      message: `CodePilot requested permissions to use ${WebFetchTool.name}, but you haven't granted it yet.`,
       suggestions: buildSuggestions(ruleContent),
     }
   },

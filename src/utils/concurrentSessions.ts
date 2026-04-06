@@ -30,7 +30,7 @@ function getSessionsDir(): string {
  */
 function envSessionKind(): SessionKind | undefined {
   if (feature('BG_SESSIONS')) {
-    const k = process.env.DEVFORGE_SESSION_KIND
+    const k = process.env.CODEPILOT_SESSION_KIND
     if (k === 'bg' || k === 'daemon' || k === 'daemon-worker') return k
   }
   return undefined
@@ -82,15 +82,15 @@ export async function registerSession(): Promise<boolean> {
         cwd: getOriginalCwd(),
         startedAt: Date.now(),
         kind,
-        entrypoint: process.env.DEVFORGE_ENTRYPOINT,
+        entrypoint: process.env.CODEPILOT_ENTRYPOINT,
         ...(feature('UDS_INBOX')
-          ? { messagingSocketPath: process.env.DEVFORGE_MESSAGING_SOCKET }
+          ? { messagingSocketPath: process.env.CODEPILOT_MESSAGING_SOCKET }
           : {}),
         ...(feature('BG_SESSIONS')
           ? {
-              name: process.env.DEVFORGE_SESSION_NAME,
-              logPath: process.env.DEVFORGE_SESSION_LOG,
-              agent: process.env.DEVFORGE_AGENT,
+              name: process.env.CODEPILOT_SESSION_NAME,
+              logPath: process.env.CODEPILOT_SESSION_LOG,
+              agent: process.env.CODEPILOT_AGENT,
             }
           : {}),
       }),

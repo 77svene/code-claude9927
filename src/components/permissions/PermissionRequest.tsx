@@ -128,18 +128,18 @@ export type ToolUseConfirm<Input extends AnyObject = AnyObject> = {
 function getNotificationMessage(toolUseConfirm: ToolUseConfirm): string {
   const toolName = toolUseConfirm.tool.userFacingName(toolUseConfirm.input as never);
   if (toolUseConfirm.tool === ExitPlanModeV2Tool) {
-    return 'DevForge needs your approval for the plan';
+    return 'CodePilot needs your approval for the plan';
   }
   if (toolUseConfirm.tool === EnterPlanModeTool) {
-    return 'DevForge wants to enter plan mode';
+    return 'CodePilot wants to enter plan mode';
   }
   if (feature('REVIEW_ARTIFACT') && toolUseConfirm.tool === ReviewArtifactTool) {
-    return 'DevForge needs your approval for a review artifact';
+    return 'CodePilot needs your approval for a review artifact';
   }
   if (!toolName || toolName.trim() === '') {
-    return 'DevForge needs your attention';
+    return 'CodePilot needs your attention';
   }
-  return `DevForge needs your permission to use ${toolName}`;
+  return `CodePilot needs your permission to use ${toolName}`;
 }
 
 // TODO: Move this to Tool.renderPermissionRequest

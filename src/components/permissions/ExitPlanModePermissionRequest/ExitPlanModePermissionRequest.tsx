@@ -363,7 +363,7 @@ export function ExitPlanModePermissionRequest({
 
       // Set initial message - REPL will handle context clear and fresh query
       // Add verification instruction if the feature is enabled
-      // Dead code elimination: DEVFORGE_VERIFY_PLAN='false' in external builds, so === 'true' check allows Bun to eliminate the string
+      // Dead code elimination: CODEPILOT_VERIFY_PLAN='false' in external builds, so === 'true' check allows Bun to eliminate the string
       const verificationInstruction = undefined === 'true' ? `\n\nIMPORTANT: When you have finished implementing the plan, you MUST call the "VerifyPlanExecution" tool directly (NOT the ${AGENT_TOOL_NAME} tool or an agent) to trigger background verification.` : '';
 
       // Capture the transcript path before context is cleared (session ID will be regenerated)
@@ -600,7 +600,7 @@ export function ExitPlanModePermissionRequest({
     }
     return <PermissionDialog color="planMode" title="Exit plan mode?" workerBadge={workerBadge}>
         <Box flexDirection="column" paddingX={1} marginTop={1}>
-          <Text>DevForge wants to exit plan mode</Text>
+          <Text>CodePilot wants to exit plan mode</Text>
           <Box marginTop={1}>
             <Select options={[{
             label: 'Yes',
@@ -644,7 +644,7 @@ export function ExitPlanModePermissionRequest({
                 </Box>}
             {!useStickyFooter && <>
                 <Text dimColor>
-                  DevForge has written up a plan and is ready to execute. Would
+                  CodePilot has written up a plan and is ready to execute. Would
                   you like to proceed?
                 </Text>
                 <Box marginTop={1}>
@@ -730,7 +730,7 @@ export function buildPlanApprovalOptions({
   });
   if (showUltraplan) {
     options.push({
-      label: 'No, refine with Ultraplan on DevForge on the web',
+      label: 'No, refine with Ultraplan on CodePilot on the web',
       value: 'ultraplan'
     });
   }
@@ -738,7 +738,7 @@ export function buildPlanApprovalOptions({
     type: 'input',
     label: 'No, keep planning',
     value: 'no',
-    placeholder: 'Tell DevForge what to change',
+    placeholder: 'Tell CodePilot what to change',
     description: 'shift+tab to approve with this feedback',
     onChange: onFeedbackChange
   });

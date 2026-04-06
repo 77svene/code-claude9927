@@ -42,7 +42,7 @@ type LoadingStateProps = {
  * <LoadingState
  *   message="Loading sessions"
  *   bold
- *   subtitle="Fetching your DevForge sessions..."
+ *   subtitle="Fetching your CodePilot sessions..."
  * />
  */
 export function LoadingState(t0) {

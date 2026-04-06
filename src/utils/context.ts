@@ -31,7 +31,7 @@ export function getContextWindowForModel(
   _model: string,
   _betas?: string[],
 ): number {
-  const envVal = process.env.DEVFORGE_CONTEXT_WINDOW
+  const envVal = process.env.CODEPILOT_CONTEXT_WINDOW
   if (envVal) {
     const override = parseInt(envVal, 10)
     if (!isNaN(override) && override > 0) {

@@ -272,7 +272,7 @@ export function useManagePlugins({
       const { ant_enabled_names, ...baseMetrics } = metrics
       const allMetrics = {
         ...baseMetrics,
-        has_custom_plugin_cache_dir: !!process.env.DEVFORGE_PLUGIN_CACHE_DIR,
+        has_custom_plugin_cache_dir: !!process.env.CODEPILOT_PLUGIN_CACHE_DIR,
       }
       logEvent('tengu_plugins_loaded', {
         ...allMetrics,

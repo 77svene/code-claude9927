@@ -761,7 +761,7 @@ function PromptInput({
     if (feature('ULTRAPLAN') && ultraplanTriggers.length) {
       addNotification({
         key: 'ultraplan-active',
-        text: 'This prompt will launch an ultraplan session in DevForge on the web',
+        text: 'This prompt will launch an ultraplan session in CodePilot on the web',
         priority: 'immediate',
         timeoutMs: 5000
       });

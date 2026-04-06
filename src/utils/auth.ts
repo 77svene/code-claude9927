@@ -1,7 +1,7 @@
 /**
  * auth.ts - stubbed for local model usage
  * All OAuth, AWS, and GCP credential logic removed.
- * DEVFORGE_API_KEY env var used instead of ANTHROPIC_API_KEY.
+ * CODEPILOT_API_KEY env var used instead of ANTHROPIC_API_KEY.
  */
 
 import { getAPIProvider } from 'src/utils/model/providers.js'
@@ -32,18 +32,18 @@ export type OrgValidationResult =
 // ── API key ──────────────────────────────────────────────────────────────────
 
 export function getAnthropicApiKey(): null | string {
-  return process.env.DEVFORGE_API_KEY || ''
+  return process.env.CODEPILOT_API_KEY || ''
 }
 
 export function getAnthropicApiKeyWithSource(
   _opts: { skipRetrievingKeyFromApiKeyHelper?: boolean } = {},
 ): { key: null | string; source: ApiKeySource } {
-  const key = process.env.DEVFORGE_API_KEY || null
+  const key = process.env.CODEPILOT_API_KEY || null
   return { key, source: key ? 'ANTHROPIC_API_KEY' : 'none' }
 }
 
 export function hasAnthropicApiKeyAuth(): boolean {
-  return !!(process.env.DEVFORGE_API_KEY)
+  return !!(process.env.CODEPILOT_API_KEY)
 }
 
 // ── Subscription checks (all false / free) ───────────────────────────────────
@@ -119,7 +119,7 @@ export function getAuthTokenSource(): {
     | 'none'
   hasToken: boolean
 } {
-  const key = process.env.DEVFORGE_API_KEY
+  const key = process.env.CODEPILOT_API_KEY
   return key
     ? { source: 'ANTHROPIC_API_KEY', hasToken: true }
     : { source: 'none', hasToken: false }

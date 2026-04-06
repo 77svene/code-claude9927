@@ -87,12 +87,12 @@ export async function resolveAttachments(
   // outside remain in the build even if never called".
   if (feature('BRIDGE_MODE')) {
     // Headless/SDK callers never set appState.replBridgeEnabled (only the TTY
-    // REPL does, at main.tsx init). DEVFORGE_BRIEF_UPLOAD lets a host that
+    // REPL does, at main.tsx init). CODEPILOT_BRIEF_UPLOAD lets a host that
     // runs the CLI as a subprocess opt in — e.g. the cowork desktop bridge,
-    // which already passes DEVFORGE_OAUTH_TOKEN for auth.
+    // which already passes CODEPILOT_OAUTH_TOKEN for auth.
     const shouldUpload =
       uploadCtx.replBridgeEnabled ||
-      isEnvTruthy(process.env.DEVFORGE_BRIEF_UPLOAD)
+      isEnvTruthy(process.env.CODEPILOT_BRIEF_UPLOAD)
     const { uploadBriefAttachment } = await import('./upload.js')
     const uuids = await Promise.all(
       stated.map(a =>

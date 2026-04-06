@@ -2,9 +2,9 @@
 
 import { getAPIProvider } from '../utils/model/providers.js'
 
-const DEFAULT_PREFIX = `You are DevForge, a local AI-powered coding assistant.`
-const AGENT_SDK_CLAUDE_CODE_PRESET_PREFIX = `You are DevForge, a local AI-powered coding assistant, running within the Agent SDK.`
-const AGENT_SDK_PREFIX = `You are a DevForge agent.`
+const DEFAULT_PREFIX = `You are CodePilot, a local AI-powered coding assistant.`
+const AGENT_SDK_CLAUDE_CODE_PRESET_PREFIX = `You are CodePilot, a local AI-powered coding assistant, running within the Agent SDK.`
+const AGENT_SDK_PREFIX = `You are a CodePilot agent.`
 
 const CLI_SYSPROMPT_PREFIX_VALUES = [
   DEFAULT_PREFIX,
@@ -42,7 +42,7 @@ export function getCLISyspromptPrefix(options?: {
 
 /**
  * Get attribution header for API requests.
- * Always returns an empty string for DevForge.
+ * Always returns an empty string for CodePilot.
  */
 export function getAttributionHeader(fingerprint: string): string {
   return ''

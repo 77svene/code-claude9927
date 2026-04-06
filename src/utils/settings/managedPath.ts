@@ -9,9 +9,9 @@ export const getManagedFilePath = memoize(function (): string {
   // Allow override for testing/demos (Ant-only, eliminated from external builds)
   if (
     process.env.USER_TYPE === 'ant' &&
-    process.env.DEVFORGE_MANAGED_SETTINGS_PATH
+    process.env.CODEPILOT_MANAGED_SETTINGS_PATH
   ) {
-    return process.env.DEVFORGE_MANAGED_SETTINGS_PATH
+    return process.env.CODEPILOT_MANAGED_SETTINGS_PATH
   }
 
   switch (getPlatform()) {

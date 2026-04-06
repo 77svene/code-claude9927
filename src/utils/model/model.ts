@@ -6,11 +6,11 @@ export type ModelName = string
 export type ModelSetting = ModelName | ModelAlias | null
 
 export function getMainLoopModel(): ModelName {
-  return process.env.DEVFORGE_MODEL || 'qwen3.5:9b'
+  return process.env.CODEPILOT_MODEL || 'qwen3.5:9b'
 }
 
 export function getSmallFastModel(): ModelName {
-  return process.env.DEVFORGE_SMALL_MODEL || getMainLoopModel()
+  return process.env.CODEPILOT_SMALL_MODEL || getMainLoopModel()
 }
 
 export function getDefaultOpusModel(): ModelName {
@@ -30,7 +30,7 @@ export function getBestModel(): ModelName {
 }
 
 export function getUserSpecifiedModelSetting(): ModelSetting | undefined {
-  return process.env.DEVFORGE_MODEL || undefined
+  return process.env.CODEPILOT_MODEL || undefined
 }
 
 export function isNonCustomOpusModel(_model: ModelName): boolean {

@@ -41,11 +41,11 @@ async function createWorkflowFile(
   }
 
   let content = workflowContent
-  if (secretName === 'DEVFORGE_OAUTH_TOKEN') {
+  if (secretName === 'CODEPILOT_OAUTH_TOKEN') {
     // For OAuth tokens, use the claude_code_oauth_token parameter
     content = workflowContent.replace(
       /anthropic_api_key: \$\{\{ secrets\.ANTHROPIC_API_KEY \}\}/g,
-      `claude_code_oauth_token: \${{ secrets.DEVFORGE_OAUTH_TOKEN }}`,
+      `claude_code_oauth_token: \${{ secrets.CODEPILOT_OAUTH_TOKEN }}`,
     )
   } else if (secretName !== 'ANTHROPIC_API_KEY') {
     // For other custom secret names, keep using anthropic_api_key parameter
@@ -225,7 +225,7 @@ export async function setupGitHubActions(
         workflows.push({
           path: '.github/workflows/claude.yml',
           content: WORKFLOW_CONTENT,
-          message: 'DevForge PR Assistant workflow',
+          message: 'CodePilot PR Assistant workflow',
         })
       }
 
@@ -233,7 +233,7 @@ export async function setupGitHubActions(
         workflows.push({
           path: '.github/workflows/claude-code-review.yml',
           content: CODE_REVIEW_PLUGIN_WORKFLOW_CONTENT,
-          message: 'DevForge Review workflow',
+          message: 'CodePilot Review workflow',
         })
       }
 

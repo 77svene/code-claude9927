@@ -274,7 +274,7 @@ const MAX_DOWNLOAD_RETRIES = 3
 
 function getStallTimeoutMs(): number {
   return (
-    Number(process.env.DEVFORGE_STALL_TIMEOUT_MS_FOR_TESTING) ||
+    Number(process.env.CODEPILOT_STALL_TIMEOUT_MS_FOR_TESTING) ||
     DEFAULT_STALL_TIMEOUT_MS
   )
 }

@@ -10,9 +10,9 @@ export default {
   get description() {
     const reward = getCachedReferrerReward()
     if (reward) {
-      return 'Share a free week of DevForge with friends and earn extra usage'
+      return 'Share a free week of CodePilot with friends and earn extra usage'
     }
-    return 'Share a free week of DevForge with friends'
+    return 'Share a free week of CodePilot with friends'
   },
   get isHidden() {
     const { eligible, hasCache } = checkCachedPassesEligibility()

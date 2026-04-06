@@ -307,18 +307,18 @@ export function createSessionSpawner(deps: SessionSpawnerDeps): SessionSpawner {
         ...deps.env,
         // Strip the bridge's OAuth token so the child CC process uses
         // the session access token for inference instead.
-        DEVFORGE_OAUTH_TOKEN: undefined,
-        DEVFORGE_ENVIRONMENT_KIND: 'bridge',
-        ...(deps.sandbox && { DEVFORGE_FORCE_SANDBOX: '1' }),
-        DEVFORGE_SESSION_ACCESS_TOKEN: opts.accessToken,
+        CODEPILOT_OAUTH_TOKEN: undefined,
+        CODEPILOT_ENVIRONMENT_KIND: 'bridge',
+        ...(deps.sandbox && { CODEPILOT_FORCE_SANDBOX: '1' }),
+        CODEPILOT_SESSION_ACCESS_TOKEN: opts.accessToken,
         // v1: HybridTransport (WS reads + POST writes) to Session-Ingress.
-        // Harmless in v2 mode — transportUtils checks DEVFORGE_USE_CCR_V2 first.
-        DEVFORGE_POST_FOR_SESSION_INGRESS_V2: '1',
+        // Harmless in v2 mode — transportUtils checks CODEPILOT_USE_CCR_V2 first.
+        CODEPILOT_POST_FOR_SESSION_INGRESS_V2: '1',
         // v2: SSETransport + CCRClient to CCR's /v1/code/sessions/* endpoints.
         // Same env vars environment-manager sets in the container path.
         ...(opts.useCcrV2 && {
-          DEVFORGE_USE_CCR_V2: '1',
-          DEVFORGE_WORKER_EPOCH: String(opts.workerEpoch),
+          CODEPILOT_USE_CCR_V2: '1',
+          CODEPILOT_WORKER_EPOCH: String(opts.workerEpoch),
         }),
       }
 
@@ -533,7 +533,7 @@ export function createSessionSpawner(deps: SessionSpawnerDeps): SessionSpawner {
           handle.writeStdin(
             jsonStringify({
               type: 'update_environment_variables',
-              variables: { DEVFORGE_SESSION_ACCESS_TOKEN: token },
+              variables: { CODEPILOT_SESSION_ACCESS_TOKEN: token },
             }) + '\n',
           )
           deps.onDebug(

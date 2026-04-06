@@ -402,10 +402,10 @@ export function calculateMessagesToKeepIndex(
  */
 export function shouldUseSessionMemoryCompaction(): boolean {
   // Allow env var override for eval runs and testing
-  if (isEnvTruthy(process.env.ENABLE_DEVFORGE_SM_COMPACT)) {
+  if (isEnvTruthy(process.env.ENABLE_CODEPILOT_SM_COMPACT)) {
     return true
   }
-  if (isEnvTruthy(process.env.DISABLE_DEVFORGE_SM_COMPACT)) {
+  if (isEnvTruthy(process.env.DISABLE_CODEPILOT_SM_COMPACT)) {
     return false
   }
 

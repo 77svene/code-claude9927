@@ -750,8 +750,8 @@ export async function getAttachments(
   options?: { skipSkillDiscovery?: boolean },
 ): Promise<Attachment[]> {
   if (
-    isEnvTruthy(process.env.DEVFORGE_DISABLE_ATTACHMENTS) ||
-    isEnvTruthy(process.env.DEVFORGE_SIMPLE)
+    isEnvTruthy(process.env.CODEPILOT_DISABLE_ATTACHMENTS) ||
+    isEnvTruthy(process.env.CODEPILOT_SIMPLE)
   ) {
     // query.ts:removeFromQueue dequeues these unconditionally after
     // getAttachmentMessages runs — returning [] here silently drops them.
@@ -3519,7 +3519,7 @@ async function getAsyncHookResponseAttachments(): Promise<Attachment[]> {
 
 /**
  * Get teammate mailbox attachments for agent swarm communication
- * Teammates are independent DevForge sessions running in parallel (swarms),
+ * Teammates are independent CodePilot sessions running in parallel (swarms),
  * not parent-child subagent relationships.
  *
  * This function checks two sources for messages:
@@ -3808,7 +3808,7 @@ function getTokenUsageAttachment(
   messages: Message[],
   model: string,
 ): Attachment[] {
-  if (!isEnvTruthy(process.env.DEVFORGE_ENABLE_TOKEN_USAGE_ATTACHMENT)) {
+  if (!isEnvTruthy(process.env.CODEPILOT_ENABLE_TOKEN_USAGE_ATTACHMENT)) {
     return []
   }
 
@@ -3897,7 +3897,7 @@ async function getVerifyPlanReminderAttachment(
 ): Promise<Attachment[]> {
   if (
     process.env.USER_TYPE !== 'ant' ||
-    !isEnvTruthy(process.env.DEVFORGE_VERIFY_PLAN)
+    !isEnvTruthy(process.env.CODEPILOT_VERIFY_PLAN)
   ) {
     return []
   }

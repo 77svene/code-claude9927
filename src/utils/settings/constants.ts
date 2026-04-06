@@ -195,8 +195,8 @@ export const SOURCES = [
 ] as const satisfies readonly EditableSettingSource[]
 
 /**
- * The JSON Schema URL for DevForge settings
+ * The JSON Schema URL for CodePilot settings
  * You can edit the contents at https://github.com/SchemaStore/schemastore/blob/master/src/schemas/json/claude-code-settings.json
  */
-export const DEVFORGE_SETTINGS_SCHEMA_URL =
+export const CODEPILOT_SETTINGS_SCHEMA_URL =
   'https://json.schemastore.org/claude-code-settings.json'

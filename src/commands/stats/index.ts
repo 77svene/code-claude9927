@@ -3,7 +3,7 @@ import type { Command } from '../../commands.js'
 const stats = {
   type: 'local-jsx',
   name: 'stats',
-  description: 'Show your DevForge usage statistics and activity',
+  description: 'Show your CodePilot usage statistics and activity',
   load: () => import('./stats.js'),
 } satisfies Command
 

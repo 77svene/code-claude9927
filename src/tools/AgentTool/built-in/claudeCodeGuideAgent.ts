@@ -14,11 +14,11 @@ import type {
   BuiltInAgentDefinition,
 } from '../loadAgentsDir.js'
 
-const DEVFORGE_DOCS_MAP_URL =
+const CODEPILOT_DOCS_MAP_URL =
   ''
 const CDP_DOCS_MAP_URL = 'https://platform.claude.com/llms.txt'
 
-export const DEVFORGE_GUIDE_AGENT_TYPE = 'claude-code-guide'
+export const CODEPILOT_GUIDE_AGENT_TYPE = 'claude-code-guide'
 
 function getClaudeCodeGuideBasePrompt(): string {
   // Ant-native builds alias find/grep to embedded bfs/ugrep and remove the
@@ -27,19 +27,19 @@ function getClaudeCodeGuideBasePrompt(): string {
     ? `${FILE_READ_TOOL_NAME}, \`find\`, and \`grep\``
     : `${FILE_READ_TOOL_NAME}, ${GLOB_TOOL_NAME}, and ${GREP_TOOL_NAME}`
 
-  return `You are the DevForge guide agent. Your primary responsibility is helping users understand and use DevForge, the DevForge Agent SDK, and the DevForge API effectively.
+  return `You are the CodePilot guide agent. Your primary responsibility is helping users understand and use CodePilot, the CodePilot Agent SDK, and the CodePilot API effectively.
 
 **Your expertise spans three domains:**
 
-1. **DevForge** (the CLI tool): Installation, configuration, hooks, skills, MCP servers, keyboard shortcuts, IDE integrations, settings, and workflows.
+1. **CodePilot** (the CLI tool): Installation, configuration, hooks, skills, MCP servers, keyboard shortcuts, IDE integrations, settings, and workflows.
 
-2. **DevForge Agent SDK**: A framework for building custom AI agents based on DevForge technology. Available for Node.js/TypeScript and Python.
+2. **CodePilot Agent SDK**: A framework for building custom AI agents based on CodePilot technology. Available for Node.js/TypeScript and Python.
 
-3. **DevForge API**: The DevForge API for direct model interaction, tool use, and integrations.
+3. **CodePilot API**: The CodePilot API for direct model interaction, tool use, and integrations.
 
 **Documentation sources:**
 
-- **DevForge docs** (${DEVFORGE_DOCS_MAP_URL}): Fetch this for questions about the DevForge CLI tool, including:
+- **CodePilot docs** (${CODEPILOT_DOCS_MAP_URL}): Fetch this for questions about the CodePilot CLI tool, including:
   - Installation, setup, and getting started
   - Hooks (pre/post command execution)
   - Custom skills
@@ -50,18 +50,18 @@ function getClaudeCodeGuideBasePrompt(): string {
   - Subagents and plugins
   - Sandboxing and security
 
-- **DevForge Agent SDK docs** (${CDP_DOCS_MAP_URL}): Fetch this for questions about building agents with the SDK, including:
+- **CodePilot Agent SDK docs** (${CDP_DOCS_MAP_URL}): Fetch this for questions about building agents with the SDK, including:
   - SDK overview and getting started (Python and TypeScript)
   - Agent configuration + custom tools
   - Session management and permissions
   - MCP integration in agents
   - Hosting and deployment
   - Cost tracking and context management
-  Note: Agent SDK docs are part of the DevForge API documentation at the same URL.
+  Note: Agent SDK docs are part of the CodePilot API documentation at the same URL.
 
-- **DevForge API docs** (${CDP_DOCS_MAP_URL}): Fetch this for questions about the DevForge API, including:
+- **CodePilot API docs** (${CDP_DOCS_MAP_URL}): Fetch this for questions about the CodePilot API, including:
   - Messages API and streaming
-  - Tool use (function calling) and DevForge-defined tools (computer use, code execution, web search, text editor, bash, programmatic tool calling, tool search tool, context editing, Files API, structured outputs)
+  - Tool use (function calling) and CodePilot-defined tools (computer use, code execution, web search, text editor, bash, programmatic tool calling, tool search tool, context editing, Files API, structured outputs)
   - Vision, PDF support, and citations
   - Extended thinking and structured outputs
   - MCP connector for remote MCP servers
@@ -95,9 +95,9 @@ function getFeedbackGuideline(): string {
   return "- When you cannot find an answer or the feature doesn't exist, direct the user to use /feedback to report a feature request or bug"
 }
 
-export const DEVFORGE_GUIDE_AGENT: BuiltInAgentDefinition = {
-  agentType: DEVFORGE_GUIDE_AGENT_TYPE,
-  whenToUse: `Use this agent when the user asks questions ("Can DevForge...", "Does DevForge...", "How do I...") about: (1) DevForge (the CLI tool) - features, hooks, slash commands, MCP servers, settings, IDE integrations, keyboard shortcuts; (2) DevForge Agent SDK - building custom agents; (3) DevForge API - API usage, tool use, DevForge SDK usage. **IMPORTANT:** Before spawning a new agent, check if there is already a running or recently completed devforge-guide agent that you can continue via ${SEND_MESSAGE_TOOL_NAME}.`,
+export const CODEPILOT_GUIDE_AGENT: BuiltInAgentDefinition = {
+  agentType: CODEPILOT_GUIDE_AGENT_TYPE,
+  whenToUse: `Use this agent when the user asks questions ("Can CodePilot...", "Does CodePilot...", "How do I...") about: (1) CodePilot (the CLI tool) - features, hooks, slash commands, MCP servers, settings, IDE integrations, keyboard shortcuts; (2) CodePilot Agent SDK - building custom agents; (3) CodePilot API - API usage, tool use, CodePilot SDK usage. **IMPORTANT:** Before spawning a new agent, check if there is already a running or recently completed codepilot-guide agent that you can continue via ${SEND_MESSAGE_TOOL_NAME}.`,
   // Ant-native builds: Glob/Grep tools are removed; use Bash (with embedded
   // bfs/ugrep via find/grep aliases) for local file search instead.
   tools: hasEmbeddedSearchTools()

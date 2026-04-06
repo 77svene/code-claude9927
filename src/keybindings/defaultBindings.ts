@@ -5,7 +5,7 @@ import { getPlatform } from '../utils/platform.js'
 import type { KeybindingBlock } from './types.js'
 
 /**
- * Default keybindings that match current DevForge behavior.
+ * Default keybindings that match current CodePilot behavior.
  * These are loaded first, then user keybindings.json overrides them.
  */
 

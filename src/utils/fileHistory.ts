@@ -66,14 +66,14 @@ export function fileHistoryEnabled(): boolean {
   }
   return (
     getGlobalConfig().fileCheckpointingEnabled !== false &&
-    !isEnvTruthy(process.env.DEVFORGE_DISABLE_FILE_CHECKPOINTING)
+    !isEnvTruthy(process.env.CODEPILOT_DISABLE_FILE_CHECKPOINTING)
   )
 }
 
 function fileHistoryEnabledSdk(): boolean {
   return (
-    isEnvTruthy(process.env.DEVFORGE_ENABLE_SDK_FILE_CHECKPOINTING) &&
-    !isEnvTruthy(process.env.DEVFORGE_DISABLE_FILE_CHECKPOINTING)
+    isEnvTruthy(process.env.CODEPILOT_ENABLE_SDK_FILE_CHECKPOINTING) &&
+    !isEnvTruthy(process.env.CODEPILOT_DISABLE_FILE_CHECKPOINTING)
   )
 }
 

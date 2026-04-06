@@ -105,7 +105,7 @@ async function getDesktopVersion(): Promise<string | null> {
     if (!localAppData) {
       return null
     }
-    const installDir = join(localAppData, 'DevForge')
+    const installDir = join(localAppData, 'CodePilot')
     try {
       const entries = await readdir(installDir)
       const versions = entries

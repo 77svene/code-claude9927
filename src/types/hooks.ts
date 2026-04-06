@@ -51,7 +51,7 @@ export const syncHookResponseSchema = lazySchema(() =>
   z.object({
     continue: z
       .boolean()
-      .describe('Whether DevForge should continue after hook (default: true)')
+      .describe('Whether CodePilot should continue after hook (default: true)')
       .optional(),
     suppressOutput: z
       .boolean()

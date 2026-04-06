@@ -1,5 +1,5 @@
 /**
- * Perfetto Tracing for DevForge (Ant-only)
+ * Perfetto Tracing for CodePilot (Ant-only)
  *
  * This module generates traces in the Chrome Trace Event format that can be
  * viewed in ui.perfetto.dev or Chrome's chrome://tracing.
@@ -13,10 +13,10 @@
  * - User input waiting time
  *
  * Usage:
- * 1. Enable via DEVFORGE_PERFETTO_TRACE=1 or DEVFORGE_PERFETTO_TRACE=<path>
- * 2. Optionally set DEVFORGE_PERFETTO_WRITE_INTERVAL_S=<positive integer> to write the
+ * 1. Enable via CODEPILOT_PERFETTO_TRACE=1 or CODEPILOT_PERFETTO_TRACE=<path>
+ * 2. Optionally set CODEPILOT_PERFETTO_WRITE_INTERVAL_S=<positive integer> to write the
  *    trace file periodically (default: write only on exit).
- * 3. Run DevForge normally
+ * 3. Run CodePilot normally
  * 4. Trace file is written to ~/.claude/traces/trace-<session-id>.json
  *    or to the specified path
  * 5. Open in ui.perfetto.dev to visualize
@@ -251,7 +251,7 @@ function evictOldestEvents(): void {
  * Call this early in the application lifecycle
  */
 export function initializePerfettoTracing(): void {
-  const envValue = process.env.DEVFORGE_PERFETTO_TRACE
+  const envValue = process.env.CODEPILOT_PERFETTO_TRACE
   logForDebugging(
     `[Perfetto] initializePerfettoTracing called, env value: ${envValue}`,
   )
@@ -281,9 +281,9 @@ export function initializePerfettoTracing(): void {
       `[Perfetto] Tracing enabled, will write to: ${tracePath}, isEnabled=${isEnabled}`,
     )
 
-    // Start periodic full-trace write if DEVFORGE_PERFETTO_WRITE_INTERVAL_S is a positive integer
+    // Start periodic full-trace write if CODEPILOT_PERFETTO_WRITE_INTERVAL_S is a positive integer
     const intervalSec = parseInt(
-      process.env.DEVFORGE_PERFETTO_WRITE_INTERVAL_S ?? '',
+      process.env.CODEPILOT_PERFETTO_WRITE_INTERVAL_S ?? '',
       10,
     )
     if (intervalSec > 0) {

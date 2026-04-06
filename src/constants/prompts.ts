@@ -26,10 +26,10 @@ import { getCanonicalName, getMarketingNameForModel } from '../utils/model/model
 // Public constants
 // ---------------------------------------------------------------------------
 
-export const DEVFORGE_DOCS_MAP_URL = ''
+export const CODEPILOT_DOCS_MAP_URL = ''
 
-/** @deprecated Use DEVFORGE_DOCS_MAP_URL */
-export const CLAUDE_CODE_DOCS_MAP_URL = DEVFORGE_DOCS_MAP_URL
+/** @deprecated Use CODEPILOT_DOCS_MAP_URL */
+export const CLAUDE_CODE_DOCS_MAP_URL = CODEPILOT_DOCS_MAP_URL
 
 /**
  * Boundary marker separating static (cross-org cacheable) content from dynamic content.
@@ -43,7 +43,7 @@ export const CLAUDE_CODE_DOCS_MAP_URL = DEVFORGE_DOCS_MAP_URL
 export const SYSTEM_PROMPT_DYNAMIC_BOUNDARY = '__SYSTEM_PROMPT_DYNAMIC_BOUNDARY__'
 
 export const DEFAULT_AGENT_PROMPT =
-  `You are an agent for DevForge, a local AI-powered coding assistant. Given the user's message, use the tools available to complete the task fully. When done, respond with a concise report of what was done and key findings.`
+  `You are an agent for CodePilot, a local AI-powered coding assistant. Given the user's message, use the tools available to complete the task fully. When done, respond with a concise report of what was done and key findings.`
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -217,7 +217,7 @@ export async function getSystemPrompt(
     ? `\nUse \`${getScratchpadDir()}\` for all temporary files instead of /tmp.`
     : ''
 
-  const prompt = `You are DevForge, a local AI-powered coding assistant.
+  const prompt = `You are CodePilot, a local AI-powered coding assistant.
 
 Current date: ${getSessionStartDate()}
 

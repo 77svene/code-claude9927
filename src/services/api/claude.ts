@@ -1,5 +1,5 @@
 /**
- * claude.ts — Rewritten for DevForge (OpenAI-compatible local models)
+ * claude.ts — Rewritten for CodePilot (OpenAI-compatible local models)
  *
  * Replaces the Anthropic SDK streaming with plain fetch() to
  * OpenAI-compatible /v1/chat/completions endpoints (Ollama, llama.cpp, vLLM, etc.)
@@ -21,7 +21,7 @@ import type { QuerySource } from '../../constants/querySource.js'
 import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
 import type { Notification } from '../../context/notifications.js'
 import type { AgentId } from '../../types/ids.js'
-import { getDevForgeClient, fetchCompletion, CLIENT_REQUEST_ID_HEADER } from './client.js'
+import { getCodePilotClient, fetchCompletion, CLIENT_REQUEST_ID_HEADER } from './client.js'
 import { EMPTY_USAGE, type NonNullableUsage } from './emptyUsage.js'
 import type { GlobalCacheStrategy } from './logging.js'
 import {
@@ -418,7 +418,7 @@ export async function verifyApiKey(
 ): Promise<boolean> {
   if (isNonInteractiveSession) return true
   try {
-    const config = getDevForgeClient()
+    const config = getCodePilotClient()
     const response = await fetchCompletion(config, {
       model: config.model,
       messages: [{ role: 'user', content: 'test' }],
@@ -480,7 +480,7 @@ async function* queryModel(
   signal: AbortSignal,
   options: Options,
 ): AsyncGenerator<StreamEvent | AssistantMessage | SystemAPIErrorMessage, void> {
-  const config = getDevForgeClient()
+  const config = getCodePilotClient()
   const model = normalizeModelStringForAPI(options.model || config.model)
   const maxTokens = options.maxOutputTokensOverride || getMaxOutputTokensForModel(model)
 
@@ -733,7 +733,7 @@ export async function queryHaiku({
     'getToolPermissionContext' | 'querySource' | 'agents' | 'allowedAgentTypes' | 'mcpTools' | 'hasAppendSystemPrompt'
   > & { isNonInteractiveSession?: boolean }
 }): Promise<AssistantMessage> {
-  const config = getDevForgeClient()
+  const config = getCodePilotClient()
   return queryModelWithoutStreaming({
     messages,
     systemPrompt,

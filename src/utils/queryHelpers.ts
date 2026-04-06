@@ -159,10 +159,10 @@ export function* normalizeMessage(message: Message): Generator<SDKMessage> {
         message.data.type === 'powershell_progress'
       ) {
         // Filter bash progress to send only one per minute
-        // Only emit for DevForge Remote for now
+        // Only emit for CodePilot Remote for now
         if (
-          !isEnvTruthy(process.env.DEVFORGE_REMOTE) &&
-          !process.env.DEVFORGE_CONTAINER_ID
+          !isEnvTruthy(process.env.CODEPILOT_REMOTE) &&
+          !process.env.CODEPILOT_CONTAINER_ID
         ) {
           break
         }
