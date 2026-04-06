@@ -134,12 +134,12 @@ function getNotificationMessage(toolUseConfirm: ToolUseConfirm): string {
     return 'DevForge wants to enter plan mode';
   }
   if (feature('REVIEW_ARTIFACT') && toolUseConfirm.tool === ReviewArtifactTool) {
-    return 'Claude needs your approval for a review artifact';
+    return 'DevForge needs your approval for a review artifact';
   }
   if (!toolName || toolName.trim() === '') {
     return 'DevForge needs your attention';
   }
-  return `Claude needs your permission to use ${toolName}`;
+  return `DevForge needs your permission to use ${toolName}`;
 }
 
 // TODO: Move this to Tool.renderPermissionRequest
