@@ -325,7 +325,7 @@ const externalTips: Tip[] = [
   {
     id: 'install-github-app',
     content: async () =>
-      'Run /install-github-app to tag @claude right from your Github issues and PRs',
+      'Run /install-github-app to tag @codepilot right from your Github issues and PRs',
     cooldownSessions: 10,
     isRelevant: async () => !getGlobalConfig().githubActionSetupCount,
   },
@@ -376,7 +376,7 @@ const externalTips: Tip[] = [
   {
     id: 'continue',
     content: async () =>
-      'Run claude --continue or claude --resume to resume a conversation',
+      'Run codepilot --continue or codepilot --resume to resume a conversation',
     cooldownSessions: 10,
     isRelevant: async () => true,
   },
@@ -391,7 +391,7 @@ const externalTips: Tip[] = [
   {
     id: 'custom-commands',
     content: async () =>
-      'Create skills by adding .md files to .claude/skills/ in your project or ~/.claude/skills/ for skills that work in any project',
+      'Create skills by adding .md files to .codepilot/skills/ in your project or ~/.codepilot/skills/ for skills that work in any project',
     cooldownSessions: 15,
     async isRelevant() {
       const config = getGlobalConfig()
@@ -521,7 +521,7 @@ const externalTips: Tip[] = [
         'off' | 'copy_a' | 'copy_b'
       >('tengu_tide_elm', 'off')
       return variant === 'copy_b'
-        ? `Use ${cmd} for better one-shot answers. Claude thinks it through first.`
+        ? `Use ${cmd} for better one-shot answers. CodePilot thinks it through first.`
         : `Working on something tricky? ${cmd} gives better first answers`
     },
     cooldownSessions: 3,
@@ -590,11 +590,11 @@ const externalTips: Tip[] = [
   {
     id: 'guest-passes',
     content: async ctx => {
-      const claude = color('claude', ctx.theme)
+      const codepilot = color('codepilot', ctx.theme)
       const reward = getCachedReferrerReward()
       return reward
-        ? `Share CodePilot and earn ${claude(formatCreditAmount(reward))} of extra usage · ${claude('/passes')}`
-        : `You have free guest passes to share · ${claude('/passes')}`
+        ? `Share CodePilot and earn ${codepilot(formatCreditAmount(reward))} of extra usage · ${codepilot('/passes')}`
+        : `You have free guest passes to share · ${codepilot('/passes')}`
     },
     cooldownSessions: 3,
     isRelevant: async () => {
@@ -609,12 +609,12 @@ const externalTips: Tip[] = [
   {
     id: 'overage-credit',
     content: async ctx => {
-      const claude = color('claude', ctx.theme)
+      const codepilot = color('codepilot', ctx.theme)
       const info = getCachedOverageCreditGrant()
       const amount = info ? formatGrantAmount(info) : null
       if (!amount) return ''
       // Copy from "OC & Bulk Overages copy" doc (#5 — CLI Rotating tip)
-      return `${claude(`${amount} in extra usage, on us`)} · third-party apps · ${claude('/extra-usage')}`
+      return `${codepilot(`${amount} in extra usage, on us`)} · third-party apps · ${codepilot('/extra-usage')}`
     },
     cooldownSessions: 3,
     isRelevant: async () => shouldShowOverageCreditUpsell(),
@@ -636,9 +636,9 @@ const internalOnlyTips: Tip[] =
   process.env.USER_TYPE === 'ant'
     ? [
         {
-          id: 'important-claudemd',
+          id: 'important-configmd',
           content: async () =>
-            '[ANT-ONLY] Use "IMPORTANT:" prefix for must-follow CLAUDE.md rules',
+            '[ANT-ONLY] Use "IMPORTANT:" prefix for must-follow codepilot.md rules',
           cooldownSessions: 30,
           isRelevant: async () => true,
         },

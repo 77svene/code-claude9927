@@ -1,15 +1,15 @@
 import { feature } from 'bun:bundle'
 import memoize from 'lodash-es/memoize.js'
 import {
-  getAdditionalDirectoriesForClaudeMd,
-  setCachedClaudeMdContent,
+  getAdditionalDirectoriesForConfigMd,
+  setCachedConfigMdContent,
 } from './bootstrap/state.js'
 import { getLocalISODate } from './constants/common.js'
 import {
   filterInjectedMemoryFiles,
-  getClaudeMds,
+  getConfigMds,
   getMemoryFiles,
-} from './utils/claudemd.js'
+} from './utils/configmd.js'
 import { logForDiagnosticsNoPII } from './utils/diagLogs.js'
 import { isBareMode, isEnvTruthy } from './utils/envUtils.js'
 import { execFileNoThrow } from './utils/execFileNoThrow.js'
@@ -159,30 +159,30 @@ export const getUserContext = memoize(
     const startTime = Date.now()
     logForDiagnosticsNoPII('info', 'user_context_started')
 
-    // CODEPILOT_DISABLE_CLAUDE_MDS: hard off, always.
+    // CODEPILOT_DISABLE_CONFIG_MDS: hard off, always.
     // --bare: skip auto-discovery (cwd walk), BUT honor explicit --add-dir.
     // --bare means "skip what I didn't ask for", not "ignore what I asked for".
-    const shouldDisableClaudeMd =
-      isEnvTruthy(process.env.CODEPILOT_DISABLE_CLAUDE_MDS) ||
-      (isBareMode() && getAdditionalDirectoriesForClaudeMd().length === 0)
+    const shouldDisableConfigMd =
+      isEnvTruthy(process.env.CODEPILOT_DISABLE_CONFIG_MDS) ||
+      (isBareMode() && getAdditionalDirectoriesForConfigMd().length === 0)
     // Await the async I/O (readFile/readdir directory walk) so the event
     // loop yields naturally at the first fs.readFile.
-    const claudeMd = shouldDisableClaudeMd
+    const configMd = shouldDisableConfigMd
       ? null
-      : getClaudeMds(filterInjectedMemoryFiles(await getMemoryFiles()))
+      : getConfigMds(filterInjectedMemoryFiles(await getMemoryFiles()))
     // Cache for the auto-mode classifier (yoloClassifier.ts reads this
-    // instead of importing claudemd.ts directly, which would create a
+    // instead of importing configmd.ts directly, which would create a
     // cycle through permissions/filesystem → permissions → yoloClassifier).
-    setCachedClaudeMdContent(claudeMd || null)
+    setCachedConfigMdContent(configMd || null)
 
     logForDiagnosticsNoPII('info', 'user_context_completed', {
       duration_ms: Date.now() - startTime,
-      claudemd_length: claudeMd?.length ?? 0,
-      claudemd_disabled: Boolean(shouldDisableClaudeMd),
+      configmd_length: configMd?.length ?? 0,
+      configmd_disabled: Boolean(shouldDisableConfigMd),
     })
 
     return {
-      ...(claudeMd && { claudeMd }),
+      ...(configMd && { configMd }),
       currentDate: `Today's date is ${getLocalISODate()}.`,
     }
   },

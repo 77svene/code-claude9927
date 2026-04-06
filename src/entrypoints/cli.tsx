@@ -69,18 +69,18 @@ async function main(): Promise<void> {
     console.log(prompt.join('\n'));
     return;
   }
-  if (process.argv[2] === '--claude-in-chrome-mcp') {
-    profileCheckpoint('cli_claude_in_chrome_mcp_path');
+  if (process.argv[2] === '--codepilot-in-chrome-mcp') {
+    profileCheckpoint('cli_codepilot_in_chrome_mcp_path');
     const {
-      runClaudeInChromeMcpServer
-    } = await import('../utils/claudeInChrome/mcpServer.js');
-    await runClaudeInChromeMcpServer();
+      runBrowserExtensionMcpServer
+    } = await import('../utils/browserExtension/mcpServer.js');
+    await runBrowserExtensionMcpServer();
     return;
   } else if (process.argv[2] === '--chrome-native-host') {
     profileCheckpoint('cli_chrome_native_host_path');
     const {
       runChromeNativeHost
-    } = await import('../utils/claudeInChrome/chromeNativeHost.js');
+    } = await import('../utils/browserExtension/chromeNativeHost.js');
     await runChromeNativeHost();
     return;
   } else if (feature('CHICAGO_MCP') && process.argv[2] === '--computer-use-mcp') {
@@ -134,9 +134,9 @@ async function main(): Promise<void> {
     // getBridgeDisabledReason awaits GB init, so the returned value is fresh
     // (not the stale disk cache), but init still needs auth headers to work.
     const {
-      getClaudeAIOAuthTokens
+      getOAuthTokens
     } = await import('../utils/auth.js');
-    if (!getClaudeAIOAuthTokens()?.accessToken) {
+    if (!getOAuthTokens()?.accessToken) {
       exitWithError(BRIDGE_LOGIN_ERROR);
     }
     const disabledReason = await getBridgeDisabledReason();

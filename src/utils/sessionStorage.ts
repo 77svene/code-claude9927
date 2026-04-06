@@ -2,7 +2,7 @@ import { feature } from 'bun:bundle'
 import type { UUID } from 'crypto'
 import type { Dirent } from 'fs'
 // Sync fs primitives for readFileTailSync — separate from fs/promises
-// imports above. Named (not wildcard) per CLAUDE.md style; no collisions
+// imports above. Named (not wildcard) per codepilot.md style; no collisions
 // with the async-suffixed names.
 import { closeSync, fstatSync, openSync, readSync } from 'fs'
 import {
@@ -69,7 +69,7 @@ import { updateSessionName } from './concurrentSessions.js'
 import { getCwd } from './cwd.js'
 import { logForDebugging } from './debug.js'
 import { logForDiagnosticsNoPII } from './diagLogs.js'
-import { getClaudeConfigHomeDir, isEnvTruthy } from './envUtils.js'
+import { getCodePilotConfigHomeDir, isEnvTruthy } from './envUtils.js'
 import { isFsInaccessible } from './errors.js'
 import type { FileHistorySnapshot } from './fileHistory.js'
 import { formatFileSize } from './format.js'
@@ -196,7 +196,7 @@ export function isEphemeralToolProgress(dataType: unknown): boolean {
 }
 
 export function getProjectsDir(): string {
-  return join(getClaudeConfigHomeDir(), 'projects')
+  return join(getCodePilotConfigHomeDir(), 'projects')
 }
 
 export function getTranscriptPath(): string {
@@ -476,7 +476,7 @@ export function resetProjectFlushStateForTesting(): void {
 
 /**
  * Reset the entire Project singleton for testing.
- * This ensures tests with different CLAUDE_CONFIG_DIR values
+ * This ensures tests with different codepilot_CONFIG_DIR values
  * don't share stale sessionFile paths.
  */
 export function resetProjectForTesting(): void {
@@ -2097,7 +2097,7 @@ export function buildConversationChain(
  * Post-pass for buildConversationChain: recover sibling assistant blocks and
  * tool_results that the single-parent walk orphaned.
  *
- * Streaming (claude.ts:~2024) emits one AssistantMessage per content_block_stop
+ * Streaming (codepilot.ts:~2024) emits one AssistantMessage per content_block_stop
  * — N parallel tool_uses → N messages, distinct uuid, same message.id. Each
  * tool_result's sourceToolAssistantUUID points to its own one-block assistant,
  * so insertMessageChain's override (line ~894) writes each TR's parentUuid to a
@@ -2673,7 +2673,7 @@ export function saveAiGeneratedTitle(sessionId: UUID, aiTitle: string): void {
 }
 
 /**
- * Append a periodic task summary for `claude ps`. Unlike ai-title this is
+ * Append a periodic task summary for `codepilot ps`. Unlike ai-title this is
  * not re-appended by reAppendSessionMetadata — it's a rolling snapshot of
  * what the agent is doing *now*, so staleness is fine; ps reads the most
  * recent one from the tail.

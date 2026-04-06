@@ -1,7 +1,7 @@
 /**
  * auth.ts - stubbed for local model usage
  * All OAuth, AWS, and GCP credential logic removed.
- * CODEPILOT_API_KEY env var used instead of ANTHROPIC_API_KEY.
+ * CODEPILOT_API_KEY env var used instead of CODEPILOT_API_KEY.
  */
 
 import { getAPIProvider } from 'src/utils/model/providers.js'
@@ -12,7 +12,7 @@ import type { OAuthTokens, SubscriptionType } from '../services/oauth/types.js'
 import type { AccountInfo } from './config.js'
 
 export type ApiKeySource =
-  | 'ANTHROPIC_API_KEY'
+  | 'CODEPILOT_API_KEY'
   | 'apiKeyHelper'
   | '/login managed key'
   | 'none'
@@ -31,24 +31,24 @@ export type OrgValidationResult =
 
 // ── API key ──────────────────────────────────────────────────────────────────
 
-export function getAnthropicApiKey(): null | string {
+export function getcodepilotApiKey(): null | string {
   return process.env.CODEPILOT_API_KEY || ''
 }
 
-export function getAnthropicApiKeyWithSource(
+export function getcodepilotApiKeyWithSource(
   _opts: { skipRetrievingKeyFromApiKeyHelper?: boolean } = {},
 ): { key: null | string; source: ApiKeySource } {
   const key = process.env.CODEPILOT_API_KEY || null
-  return { key, source: key ? 'ANTHROPIC_API_KEY' : 'none' }
+  return { key, source: key ? 'CODEPILOT_API_KEY' : 'none' }
 }
 
-export function hasAnthropicApiKeyAuth(): boolean {
+export function hascodepilotApiKeyAuth(): boolean {
   return !!(process.env.CODEPILOT_API_KEY)
 }
 
 // ── Subscription checks (all false / free) ───────────────────────────────────
 
-export function isClaudeAISubscriber(): boolean {
+export function isSubscriber(): boolean {
   return false
 }
 
@@ -85,7 +85,7 @@ export function getSubscriptionType(): SubscriptionType | null {
 }
 
 export function getSubscriptionName(): string {
-  return 'Claude API'
+  return 'CodePilot API'
 }
 
 export function getRateLimitTier(): string | null {
@@ -108,35 +108,35 @@ export function hasProfileScope(): boolean {
 
 export function getAuthTokenSource(): {
   source:
-    | 'ANTHROPIC_API_KEY'
+    | 'CODEPILOT_API_KEY'
     | 'apiKeyHelper'
     | '/login managed key'
-    | 'claude.ai'
-    | 'ANTHROPIC_AUTH_TOKEN'
-    | 'CLAUDE_CODE_OAUTH_TOKEN'
-    | 'CLAUDE_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR'
+    | 'codepilot.local'
+    | 'CODEPILOT_AUTH_TOKEN'
+    | 'codepilot_CODE_OAUTH_TOKEN'
+    | 'codepilot_CODE_OAUTH_TOKEN_FILE_DESCRIPTOR'
     | 'CCR_OAUTH_TOKEN_FILE'
     | 'none'
   hasToken: boolean
 } {
   const key = process.env.CODEPILOT_API_KEY
   return key
-    ? { source: 'ANTHROPIC_API_KEY', hasToken: true }
+    ? { source: 'CODEPILOT_API_KEY', hasToken: true }
     : { source: 'none', hasToken: false }
 }
 
-export function isAnthropicAuthEnabled(): boolean {
+export function iscodepilotAuthEnabled(): boolean {
   return false
 }
 
 // ── OAuth tokens (stubbed to null) ────────────────────────────────────────────
 
-export const getClaudeAIOAuthTokens = Object.assign(
+export const getOAuthTokens = Object.assign(
   (): OAuthTokens | null => null,
   { cache: { clear: () => {} } },
 )
 
-export async function getClaudeAIOAuthTokensAsync(): Promise<OAuthTokens | null> {
+export async function getOAuthTokensAsync(): Promise<OAuthTokens | null> {
   return null
 }
 
@@ -274,9 +274,9 @@ export async function validateForceLoginOrg(): Promise<OrgValidationResult> {
 
 export function isUsing3PServices(): boolean {
   return !!(
-    isEnvTruthy(process.env.CLAUDE_CODE_USE_BEDROCK) ||
-    isEnvTruthy(process.env.CLAUDE_CODE_USE_VERTEX) ||
-    isEnvTruthy(process.env.CLAUDE_CODE_USE_FOUNDRY)
+    isEnvTruthy(process.env.codepilot_CODE_USE_BEDROCK) ||
+    isEnvTruthy(process.env.codepilot_CODE_USE_VERTEX) ||
+    isEnvTruthy(process.env.codepilot_CODE_USE_FOUNDRY)
   )
 }
 
@@ -296,7 +296,7 @@ export function getAccountInformation(): UserAccountInfo | undefined {
   if (authTokenSource !== 'none') {
     accountInfo.tokenSource = authTokenSource
   }
-  const { key: apiKey, source: apiKeySource } = getAnthropicApiKeyWithSource()
+  const { key: apiKey, source: apiKeySource } = getcodepilotApiKeyWithSource()
   if (apiKey) accountInfo.apiKeySource = apiKeySource
   return accountInfo
 }

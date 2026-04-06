@@ -196,7 +196,7 @@ export const SOURCES = [
 
 /**
  * The JSON Schema URL for CodePilot settings
- * You can edit the contents at https://github.com/SchemaStore/schemastore/blob/master/src/schemas/json/claude-code-settings.json
+ * You can edit the contents at https://github.com/SchemaStore/schemastore/blob/master/src/schemas/json/codepilot-code-settings.json
  */
 export const CODEPILOT_SETTINGS_SCHEMA_URL =
-  'https://json.schemastore.org/claude-code-settings.json'
+  'https://json.schemastore.org/codepilot-code-settings.json'

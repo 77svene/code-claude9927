@@ -11,8 +11,8 @@ import {
   logEvent,
 } from '../services/analytics/index.js'
 import {
-  getAnthropicApiKey,
-  getClaudeAIOAuthTokens,
+  getcodepilotApiKey,
+  getOAuthTokens,
   handleOAuth401Error,
   hasProfileScope,
 } from './auth.js'
@@ -90,7 +90,7 @@ export function getFastModeUnavailableReason(): string | null {
     !isInBundledMode() &&
     getFeatureValue_CACHED_MAY_BE_STALE('tengu_marble_sandcastle', false)
   ) {
-    return 'Fast mode requires the native binary · Install from: https://claude.com/product/claude-code'
+    return 'Fast mode requires the native binary · Install from: https://codepilot.local/product/codepilot-code'
   }
 
   // Not available in the SDK unless explicitly opted in via --settings.
@@ -130,7 +130,7 @@ export function getFastModeUnavailableReason(): string | null {
       }
     }
     const authType: AuthType =
-      getClaudeAIOAuthTokens() !== null ? 'oauth' : 'api-key'
+      getOAuthTokens() !== null ? 'oauth' : 'api-key'
     const reason = getDisabledReasonMessage(orgStatus.reason, authType)
     logForDebugging(`Fast mode unavailable: ${reason}`)
     return reason
@@ -367,12 +367,12 @@ type FastModeResponse = {
 async function fetchFastModeStatus(
   auth: { accessToken: string } | { apiKey: string },
 ): Promise<FastModeResponse> {
-  const endpoint = `${getOauthConfig().BASE_API_URL}/api/claude_code_penguin_mode`
+  const endpoint = `${getOauthConfig().BASE_API_URL}/api/codepilot_penguin_mode`
   const headers: Record<string, string> =
     'accessToken' in auth
       ? {
           Authorization: `Bearer ${auth.accessToken}`,
-          'anthropic-beta': OAUTH_BETA_HEADER,
+          'codepilot-beta': OAUTH_BETA_HEADER,
         }
       : { 'x-api-key': auth.apiKey }
 
@@ -424,9 +424,9 @@ export async function prefetchFastModeStatus(): Promise<void> {
   // Service key OAuth sessions lack user:profile scope → endpoint 403s.
   // Resolve orgStatus from cache and bail before burning the throttle window.
   // API key auth is unaffected.
-  const apiKey = getAnthropicApiKey()
+  const apiKey = getcodepilotApiKey()
   const hasUsableOAuth =
-    getClaudeAIOAuthTokens()?.accessToken && hasProfileScope()
+    getOAuthTokens()?.accessToken && hasProfileScope()
   if (!hasUsableOAuth && !apiKey) {
     const isAnt = process.env.USER_TYPE === 'ant'
     const cachedEnabled = getGlobalConfig().penguinModeOrgEnabled === true
@@ -445,7 +445,7 @@ export async function prefetchFastModeStatus(): Promise<void> {
   lastPrefetchAt = now
 
   const fetchWithCurrentAuth = async (): Promise<FastModeResponse> => {
-    const currentTokens = getClaudeAIOAuthTokens()
+    const currentTokens = getOAuthTokens()
     const auth =
       currentTokens?.accessToken && hasProfileScope()
         ? { accessToken: currentTokens.accessToken }
@@ -471,7 +471,7 @@ export async function prefetchFastModeStatus(): Promise<void> {
               typeof err.response?.data === 'string' &&
               err.response.data.includes('OAuth token has been revoked')))
         if (isAuthError) {
-          const failedAccessToken = getClaudeAIOAuthTokens()?.accessToken
+          const failedAccessToken = getOAuthTokens()?.accessToken
           if (failedAccessToken) {
             await handleOAuth401Error(failedAccessToken)
             status = await fetchWithCurrentAuth()

@@ -42,16 +42,16 @@ async function createWorkflowFile(
 
   let content = workflowContent
   if (secretName === 'CODEPILOT_OAUTH_TOKEN') {
-    // For OAuth tokens, use the claude_code_oauth_token parameter
+    // For OAuth tokens, use the codepilot_oauth_token parameter
     content = workflowContent.replace(
-      /anthropic_api_key: \$\{\{ secrets\.ANTHROPIC_API_KEY \}\}/g,
-      `claude_code_oauth_token: \${{ secrets.CODEPILOT_OAUTH_TOKEN }}`,
+      /codepilot_api_key: \$\{\{ secrets\.CODEPILOT_API_KEY \}\}/g,
+      `codepilot_oauth_token: \${{ secrets.CODEPILOT_OAUTH_TOKEN }}`,
     )
-  } else if (secretName !== 'ANTHROPIC_API_KEY') {
-    // For other custom secret names, keep using anthropic_api_key parameter
+  } else if (secretName !== 'CODEPILOT_API_KEY') {
+    // For other custom secret names, keep using codepilot_api_key parameter
     content = workflowContent.replace(
-      /anthropic_api_key: \$\{\{ secrets\.ANTHROPIC_API_KEY \}\}/g,
-      `anthropic_api_key: \${{ secrets.${secretName} }}`,
+      /codepilot_api_key: \$\{\{ secrets\.CODEPILOT_API_KEY \}\}/g,
+      `codepilot_api_key: \${{ secrets.${secretName} }}`,
     )
   }
   const base64Content = Buffer.from(content).toString('base64')
@@ -86,7 +86,7 @@ async function createWorkflowFile(
         ...context,
       })
       throw new Error(
-        `Failed to create workflow file ${workflowPath}: A Claude workflow file already exists in this repository. Please remove it first or update it manually.`,
+        `Failed to create workflow file ${workflowPath}: A CodePilot workflow file already exists in this repository. Please remove it first or update it manually.`,
       )
     }
 
@@ -101,7 +101,7 @@ async function createWorkflowFile(
       '\n\nNeed help? Common issues:\n' +
       '· Permission denied → Run: gh auth refresh -h github.com -s repo,workflow\n' +
       '· Not authorized → Ensure you have admin access to the repository\n' +
-      '· For manual setup → Visit: https://github.com/anthropics/claude-code-action'
+      '· For manual setup → Visit: https://github.com/codepilot/codepilot-action'
 
     throw new Error(
       `Failed to create workflow file ${workflowPath}: ${createFileResult.stderr}${helpText}`,
@@ -127,10 +127,10 @@ export async function setupGitHubActions(
     logEvent('tengu_setup_github_actions_started', {
       skip_workflow: skipWorkflow,
       has_api_key: !!apiKeyOrOAuthToken,
-      using_default_secret_name: secretName === 'ANTHROPIC_API_KEY',
-      selected_claude_workflow: selectedWorkflows.includes('claude'),
-      selected_claude_review_workflow:
-        selectedWorkflows.includes('claude-review'),
+      using_default_secret_name: secretName === 'CODEPILOT_API_KEY',
+      selected_workflow: selectedWorkflows.includes('codepilot'),
+      selected_review_workflow:
+        selectedWorkflows.includes('codepilot-review'),
       ...context,
     })
 
@@ -196,7 +196,7 @@ export async function setupGitHubActions(
     if (!skipWorkflow) {
       updateProgress()
       // Create new branch
-      branchName = `add-claude-github-actions-${Date.now()}`
+      branchName = `add-codepilot-github-actions-${Date.now()}`
       const createBranchResult = await execFileNoThrow('gh', [
         'api',
         '--method',
@@ -221,17 +221,17 @@ export async function setupGitHubActions(
       // Create selected workflow files
       const workflows = []
 
-      if (selectedWorkflows.includes('claude')) {
+      if (selectedWorkflows.includes('codepilot')) {
         workflows.push({
-          path: '.github/workflows/claude.yml',
+          path: '.github/workflows/codepilot.yml',
           content: WORKFLOW_CONTENT,
           message: 'CodePilot PR Assistant workflow',
         })
       }
 
-      if (selectedWorkflows.includes('claude-review')) {
+      if (selectedWorkflows.includes('codepilot-review')) {
         workflows.push({
-          path: '.github/workflows/claude-code-review.yml',
+          path: '.github/workflows/codepilot-code-review.yml',
           content: CODE_REVIEW_PLUGIN_WORKFLOW_CONTENT,
           message: 'CodePilot Review workflow',
         })
@@ -274,7 +274,7 @@ export async function setupGitHubActions(
           '\n\nNeed help? Common issues:\n' +
           '· Permission denied → Run: gh auth refresh -h github.com -s repo\n' +
           '· Not authorized → Ensure you have admin access to the repository\n' +
-          '· For manual setup → Visit: https://github.com/anthropics/claude-code-action'
+          '· For manual setup → Visit: https://github.com/codepilot/codepilot-action'
 
         throw new Error(
           `Failed to set API key secret: ${setSecretResult.stderr || 'Unknown error'}${helpText}`,
@@ -295,10 +295,10 @@ export async function setupGitHubActions(
       has_api_key: !!apiKeyOrOAuthToken,
       auth_type:
         authType as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-      using_default_secret_name: secretName === 'ANTHROPIC_API_KEY',
-      selected_claude_workflow: selectedWorkflows.includes('claude'),
-      selected_claude_review_workflow:
-        selectedWorkflows.includes('claude-review'),
+      using_default_secret_name: secretName === 'CODEPILOT_API_KEY',
+      selected_workflow: selectedWorkflows.includes('codepilot'),
+      selected_review_workflow:
+        selectedWorkflows.includes('codepilot-review'),
       ...context,
     })
     saveGlobalConfig(current => ({

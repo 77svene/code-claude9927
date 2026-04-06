@@ -238,11 +238,11 @@ export const ConfigTool = buildTool({
         '../../voice/voiceModeEnabled.js'
       )
       if (!isVoiceModeEnabled()) {
-        const { isAnthropicAuthEnabled } = await import('../../utils/auth.js')
+        const { iscodepilotAuthEnabled } = await import('../../utils/auth.js')
         return {
           data: {
             success: false,
-            error: !isAnthropicAuthEnabled()
+            error: !iscodepilotAuthEnabled()
               ? 'Voice mode requires a CodePilot account. Please run /login to sign in.'
               : 'Voice mode is not available.',
           },

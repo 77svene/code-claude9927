@@ -29,7 +29,7 @@ import { getCanonicalName, getMarketingNameForModel } from '../utils/model/model
 export const CODEPILOT_DOCS_MAP_URL = ''
 
 /** @deprecated Use CODEPILOT_DOCS_MAP_URL */
-export const CLAUDE_CODE_DOCS_MAP_URL = CODEPILOT_DOCS_MAP_URL
+export const codepilot_CODE_DOCS_MAP_URL = CODEPILOT_DOCS_MAP_URL
 
 /**
  * Boundary marker separating static (cross-org cacheable) content from dynamic content.
@@ -38,7 +38,7 @@ export const CLAUDE_CODE_DOCS_MAP_URL = CODEPILOT_DOCS_MAP_URL
  *
  * WARNING: Do not remove or reorder this marker without updating cache logic in:
  * - src/utils/api.ts (splitSysPromptPrefix)
- * - src/services/api/claude.ts (buildSystemPromptBlocks)
+ * - src/services/api/codepilot.ts (buildSystemPromptBlocks)
  */
 export const SYSTEM_PROMPT_DYNAMIC_BOUNDARY = '__SYSTEM_PROMPT_DYNAMIC_BOUNDARY__'
 
@@ -79,11 +79,11 @@ export function getUnameSR(): string {
 
 function getKnowledgeCutoff(modelId: string): string | null {
   const canonical = getCanonicalName(modelId)
-  if (canonical.includes('claude-sonnet-4-6')) return 'August 2025'
-  if (canonical.includes('claude-opus-4-6')) return 'May 2025'
-  if (canonical.includes('claude-opus-4-5')) return 'May 2025'
-  if (canonical.includes('claude-haiku-4')) return 'February 2025'
-  if (canonical.includes('claude-opus-4') || canonical.includes('claude-sonnet-4')) return 'January 2025'
+  if (canonical.includes('codepilot-sonnet-4-6')) return 'August 2025'
+  if (canonical.includes('codepilot-opus-4-6')) return 'May 2025'
+  if (canonical.includes('codepilot-opus-4-5')) return 'May 2025'
+  if (canonical.includes('codepilot-haiku-4')) return 'February 2025'
+  if (canonical.includes('codepilot-opus-4') || canonical.includes('codepilot-sonnet-4')) return 'January 2025'
   return null
 }
 

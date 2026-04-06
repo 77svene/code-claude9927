@@ -4,7 +4,7 @@ import { isPolicyAllowed } from '../../services/policyLimits/index.js'
 import type { ToolUseContext } from '../../Tool.js'
 import { ASK_USER_QUESTION_TOOL_NAME } from '../../tools/AskUserQuestionTool/prompt.js'
 import { REMOTE_TRIGGER_TOOL_NAME } from '../../tools/RemoteTriggerTool/prompt.js'
-import { getClaudeAIOAuthTokens } from '../../utils/auth.js'
+import { getOAuthTokens } from '../../utils/auth.js'
 import { checkRepoForRemoteAccess } from '../../utils/background/remote/preconditions.js'
 import { logForDebugging } from '../../utils/debug.js'
 import {
@@ -62,7 +62,7 @@ type ConnectorInfo = {
   url: string
 }
 
-function getConnectedClaudeAIConnectors(
+function getConnectedCodePilotAIConnectors(
   mcpClients: MCPServerConnection[],
 ): ConnectorInfo[] {
   const connectors: ConnectorInfo[] = []
@@ -70,7 +70,7 @@ function getConnectedClaudeAIConnectors(
     if (client.type !== 'connected') {
       continue
     }
-    if (client.config.type !== 'claudeai-proxy') {
+    if (client.config.type !== 'codepilot-proxy') {
       continue
     }
     const uuid = taggedIdToUUID(client.config.id)
@@ -88,7 +88,7 @@ function getConnectedClaudeAIConnectors(
 
 function sanitizeConnectorName(name: string): string {
   return name
-    .replace(/^claude[.\s-]ai[.\s-]/i, '')
+    .replace(/^codepilot[.\s-]ai[.\s-]/i, '')
     .replace(/[^a-zA-Z0-9_-]/g, '-')
     .replace(/-+/g, '-')
     .replace(/^-|-$/g, '')
@@ -203,7 +203,7 @@ You CANNOT delete triggers. If the user asks to delete, direct them to:
     "ccr": {
       "environment_id": "ENVIRONMENT_ID",
       "session_context": {
-        "model": "claude-sonnet-4-6",
+        "model": "codepilot-sonnet-4-6",
         "sources": [
           {"git_repository": {"url": "${gitRepoUrl || 'https://github.com/ORG/REPO'}"}}
         ],
@@ -227,7 +227,7 @@ Generate a fresh lowercase UUID for \`events[].data.uuid\` yourself.
 
 ## Available MCP Connectors
 
-These are the user's currently connected claude.ai MCP connectors:
+These are the user's currently connected codepilot.local MCP connectors:
 
 ${connectorsInfo}
 
@@ -286,7 +286,7 @@ Minimum interval is 1 hour. \`*/30 * * * *\` will be rejected.
    - Clear about which files/areas to focus on
    - Explicit about what actions to take (open PRs, commit, just analyze, etc.)
 3. **Set the schedule** — Ask when and how often. The user's timezone is ${userTimezone}. When they say a time (e.g., "every morning at 9am"), assume they mean their local time and convert to UTC for the cron expression. Always confirm the conversion: "9am ${userTimezone} = Xam UTC."
-4. **Choose the model** — Default to \`claude-sonnet-4-6\`. Tell the user which model you're defaulting to and ask if they want a different one.
+4. **Choose the model** — Default to \`codepilot-sonnet-4-6\`. Tell the user which model you're defaulting to and ask if they want a different one.
 5. **Validate connections** — Infer what services the agent will need from the user's description. For example, if they say "check Datadog and Slack me errors," the agent needs both Datadog and Slack MCP connectors. Cross-reference with the connectors list above. If any are missing, warn the user and link them to  to connect first.${gitRepoUrl ? ` The default git repo is already set to \`${gitRepoUrl}\`. Ask the user if this is the right repo or if they need a different one.` : ' Ask which git repos the remote agent needs cloned into its environment.'}
 6. **Review and confirm** — Show the full configuration before creating. Let them adjust.
 7. **Create it** \u2014 Call \`${REMOTE_TRIGGER_TOOL_NAME}\` with \`action: "create"\` and show the result. The response includes the trigger ID. Always output a link at the end: \`/{TRIGGER_ID}\`
@@ -317,7 +317,7 @@ Minimum interval is 1 hour. \`*/30 * * * *\` will be rejected.
 - Accept GitHub URLs in any format (https://github.com/org/repo, org/repo, etc.) and normalize to the full HTTPS URL (without .git suffix)
 - The prompt is the most important part — spend time getting it right. The remote agent starts with zero context, so the prompt must be self-contained.
 - To delete a trigger, direct users to 
-${needsGitHubAccessReminder ? `- If the user's request seems to require GitHub repo access (e.g. cloning a repo, opening PRs, reading code), remind them that ${getFeatureValue_CACHED_MAY_BE_STALE('tengu_cobalt_lantern', false) ? "they should run /web-setup to connect their GitHub account (or install the Claude GitHub App on the repo as an alternative) — otherwise the remote agent won't be able to access it" : "they need the Claude GitHub App installed on the repo — otherwise the remote agent won't be able to access it"}.` : ''}
+${needsGitHubAccessReminder ? `- If the user's request seems to require GitHub repo access (e.g. cloning a repo, opening PRs, reading code), remind them that ${getFeatureValue_CACHED_MAY_BE_STALE('tengu_cobalt_lantern', false) ? "they should run /web-setup to connect their GitHub account (or install the CodePilot GitHub App on the repo as an alternative) — otherwise the remote agent won't be able to access it" : "they need the CodePilot GitHub App installed on the repo — otherwise the remote agent won't be able to access it"}.` : ''}
 ${userArgs ? `\n## User Request\n\nThe user said: "${userArgs}"\n\nStart by understanding their intent and working through the appropriate workflow above.` : ''}`
 }
 
@@ -334,11 +334,11 @@ export function registerScheduleRemoteAgentsSkill(): void {
       isPolicyAllowed('allow_remote_sessions'),
     allowedTools: [REMOTE_TRIGGER_TOOL_NAME, ASK_USER_QUESTION_TOOL_NAME],
     async getPromptForCommand(args: string, context: ToolUseContext) {
-      if (!getClaudeAIOAuthTokens()?.accessToken) {
+      if (!getOAuthTokens()?.accessToken) {
         return [
           {
             type: 'text',
-            text: 'You need to authenticate with a claude.ai account first. API accounts are not supported. Run /login, then try /schedule again.',
+            text: 'You need to authenticate with a codepilot.local account first. API accounts are not supported. Run /login, then try /schedule again.',
           },
         ]
       }
@@ -353,7 +353,7 @@ export function registerScheduleRemoteAgentsSkill(): void {
         return [
           {
             type: 'text',
-            text: "We're having trouble connecting with your remote claude.ai account to set up a scheduled task. Please try /schedule again in a few minutes.",
+            text: "We're having trouble connecting with your remote codepilot.local account to set up a scheduled task. Please try /schedule again in a few minutes.",
           },
         ]
       }
@@ -362,7 +362,7 @@ export function registerScheduleRemoteAgentsSkill(): void {
       if (environments.length === 0) {
         try {
           createdEnvironment = await createDefaultCloudEnvironment(
-            'claude-code-default',
+            'codepilot-code-default',
           )
           environments = [createdEnvironment]
         } catch (err) {
@@ -402,8 +402,8 @@ export function registerScheduleRemoteAgentsSkill(): void {
             false,
           )
           const msg = webSetupEnabled
-            ? `GitHub not connected for ${repo.owner}/${repo.name} \u2014 run /web-setup to sync your GitHub credentials, or install the Claude GitHub App at .`
-            : `Claude GitHub App not installed on ${repo.owner}/${repo.name} \u2014 install at  if your trigger needs this repo.`
+            ? `GitHub not connected for ${repo.owner}/${repo.name} \u2014 run /web-setup to sync your GitHub credentials, or install the CodePilot GitHub App at .`
+            : `CodePilot GitHub App not installed on ${repo.owner}/${repo.name} \u2014 install at  if your trigger needs this repo.`
           setupNotes.push(msg)
         }
       }
@@ -412,7 +412,7 @@ export function registerScheduleRemoteAgentsSkill(): void {
       // would be factually wrong — getCurrentRepoHttpsUrl() below will
       // still populate gitRepoUrl with the GHE URL.
 
-      const connectors = getConnectedClaudeAIConnectors(
+      const connectors = getConnectedCodePilotAIConnectors(
         context.options.mcpClients,
       )
       if (connectors.length === 0) {

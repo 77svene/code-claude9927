@@ -1,9 +1,9 @@
 export const PRODUCT_URL = ''
 
 // CodePilot local model server URLs
-export const CLAUDE_AI_BASE_URL = 'http://localhost:11434'
-export const CLAUDE_AI_STAGING_BASE_URL = 'http://localhost:11434'
-export const CLAUDE_AI_LOCAL_BASE_URL = 'http://localhost:11434'
+export const BASE_URL = 'http://localhost:11434'
+export const STAGING_BASE_URL = 'http://localhost:11434'
+export const LOCAL_BASE_URL = 'http://localhost:11434'
 
 /**
  * Determine if we're in a staging environment for remote sessions.
@@ -37,11 +37,11 @@ export function isRemoteSessionLocal(
  * Get the base URL for the local model server.
  * Always returns the local URL for CodePilot.
  */
-export function getClaudeAiBaseUrl(
+export function getBaseUrl(
   sessionId?: string,
   ingressUrl?: string,
 ): string {
-  return CLAUDE_AI_LOCAL_BASE_URL
+  return LOCAL_BASE_URL
 }
 
 /**

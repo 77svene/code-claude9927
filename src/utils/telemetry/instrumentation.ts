@@ -43,7 +43,7 @@ import {
   getOtelHeadersFromHelper,
   getSubscriptionType,
   is1PApiCustomer,
-  isClaudeAISubscriber,
+  isSubscriber,
 } from 'src/utils/auth.js'
 import { getPlatform, getWslVersion } from 'src/utils/platform.js'
 
@@ -59,7 +59,7 @@ import { jsonStringify } from '../slowOperations.js'
 import { profileCheckpoint } from '../startupProfiler.js'
 import { isBetaTracingEnabled } from './betaSessionTracing.js'
 import { BigQueryMetricsExporter } from './bigqueryExporter.js'
-import { ClaudeCodeDiagLogger } from './logger.js'
+import { CodePilotCodeDiagLogger } from './logger.js'
 import { initializePerfettoTracing } from './perfettoTracing.js'
 import {
   endInteractionSpan,
@@ -335,12 +335,12 @@ function getBigQueryExportingReader() {
 
 function isBigQueryMetricsEnabled() {
   // BigQuery metrics are enabled for:
-  // 1. API customers (excluding Claude.ai subscribers and Bedrock/Vertex)
-  // 2. Claude for Enterprise (C4E) users
-  // 3. Claude for Teams users
+  // 1. API customers (excluding CodePilot.ai subscribers and Bedrock/Vertex)
+  // 2. CodePilot for Enterprise (C4E) users
+  // 3. CodePilot for Teams users
   const subscriptionType = getSubscriptionType()
   const isC4EOrTeamUser =
-    isClaudeAISubscriber() &&
+    isSubscriber() &&
     (subscriptionType === 'enterprise' || subscriptionType === 'team')
 
   return is1PApiCustomer() || isC4EOrTeamUser
@@ -446,7 +446,7 @@ export async function initializeTelemetry() {
     }
   }
 
-  diag.setLogger(new ClaudeCodeDiagLogger(), DiagLogLevel.ERROR)
+  diag.setLogger(new CodePilotCodeDiagLogger(), DiagLogLevel.ERROR)
 
   // Initialize Perfetto tracing (independent of OTEL)
   // Enable via CODEPILOT_PERFETTO_TRACE=1 or CODEPILOT_PERFETTO_TRACE=<path>
@@ -471,7 +471,7 @@ export async function initializeTelemetry() {
   // Create base resource with service attributes
   const platform = getPlatform()
   const baseAttributes: Record<string, string> = {
-    [ATTR_SERVICE_NAME]: 'claude-code',
+    [ATTR_SERVICE_NAME]: 'codepilot-code',
     [ATTR_SERVICE_VERSION]: MACRO.VERSION,
   }
 
@@ -560,7 +560,7 @@ export async function initializeTelemetry() {
     }
     registerCleanup(shutdownTelemetry)
 
-    return meterProvider.getMeter('com.anthropic.claude_code', MACRO.VERSION)
+    return meterProvider.getMeter('com.codepilot.codepilot', MACRO.VERSION)
   }
 
   const meterProvider = new MeterProvider({
@@ -697,7 +697,7 @@ Current timeout: ${timeoutMs}ms
   // Always register shutdown (internal metrics are always enabled)
   registerCleanup(shutdownTelemetry)
 
-  return meterProvider.getMeter('com.anthropic.claude_code', MACRO.VERSION)
+  return meterProvider.getMeter('com.codepilot.codepilot', MACRO.VERSION)
 }
 
 /**

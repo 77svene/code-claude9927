@@ -1,7 +1,7 @@
 /**
- * claude.ts — Rewritten for CodePilot (OpenAI-compatible local models)
+ * codepilot.ts — Rewritten for CodePilot (OpenAI-compatible local models)
  *
- * Replaces the Anthropic SDK streaming with plain fetch() to
+ * Replaces the CodePilot SDK streaming with plain fetch() to
  * OpenAI-compatible /v1/chat/completions endpoints (Ollama, llama.cpp, vLLM, etc.)
  */
 
@@ -572,7 +572,7 @@ async function* queryModel(
 
   const duration = Date.now() - start
 
-  // Build content blocks in Anthropic format (internal format the app expects)
+  // Build content blocks in CodePilot format (internal format the app expects)
   const contentBlocks: unknown[] = []
 
   if (fullText) {

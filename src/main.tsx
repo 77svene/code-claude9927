@@ -48,7 +48,7 @@ import { canUserConfigureAdvisor, getInitialAdvisorSetting, isAdvisorEnabled, is
 import { isAgentSwarmsEnabled } from './utils/agentSwarmsEnabled.js';
 import { count, uniq } from './utils/array.js';
 import { installAsciicastRecorder } from './utils/asciicast.js';
-import { getSubscriptionType, isClaudeAISubscriber, prefetchAwsCredentialsAndBedRockInfoIfSafe, prefetchGcpCredentialsIfSafe, validateForceLoginOrg } from './utils/auth.js';
+import { getSubscriptionType, isSubscriber, prefetchAwsCredentialsAndBedRockInfoIfSafe, prefetchGcpCredentialsIfSafe, validateForceLoginOrg } from './utils/auth.js';
 import { checkHasTrustDialogAccepted, getGlobalConfig, getRemoteControlAtStartup, isAutoUpdaterDisabled, saveGlobalConfig } from './utils/config.js';
 import { seedEarlyInput, stopCapturingEarlyInput } from './utils/earlyInput.js';
 import { getInitialEffortSetting, parseEffortValue } from './utils/effort.js';
@@ -84,7 +84,7 @@ import { isAnalyticsDisabled } from 'src/services/analytics/config.js';
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js';
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
 import { initializeAnalyticsGates } from 'src/services/analytics/sink.js';
-import { getOriginalCwd, setAdditionalDirectoriesForClaudeMd, setIsRemoteMode, setMainLoopModelOverride, setMainThreadAgentType, setTeleportedSessionInfo } from './bootstrap/state.js';
+import { getOriginalCwd, setAdditionalDirectoriesForConfigMd, setIsRemoteMode, setMainLoopModelOverride, setMainThreadAgentType, setTeleportedSessionInfo } from './bootstrap/state.js';
 import { filterCommandsForRemoteMode, getCommands } from './commands.js';
 import type { StatsStore } from './context/stats.js';
 import { launchAssistantInstallWizard, launchAssistantSessionChooser, launchInvalidSettingsDialog, launchResumeChooser, launchSnapshotUpdateDialog, launchTeleportRepoMismatchDialog, launchTeleportResumeWrapper } from './dialogLaunchers.js';
@@ -92,7 +92,7 @@ import { SHOW_CURSOR } from './ink/termio/dec.js';
 import { exitWithError, exitWithMessage, getRenderContext, renderAndRun, showSetupScreens } from './interactiveHelpers.js';
 import { initBuiltinPlugins } from './plugins/bundled/index.js';
 /* eslint-enable @typescript-eslint/no-require-imports */
-import { checkQuotaStatus } from './services/claudeAiLimits.js';
+import { checkQuotaStatus } from './services/apiLimits.js';
 import { getMcpToolsCommandsAndResources, prefetchAllMcpResources } from './services/mcp/client.js';
 import { VALID_INSTALLABLE_SCOPES, VALID_UPDATE_SCOPES } from './services/plugins/pluginCliCommands.js';
 import { initBundledSkills } from './skills/bundled/index.js';
@@ -101,8 +101,8 @@ import { getActiveAgentsFromList, getAgentDefinitionsWithOverrides, isBuiltInAge
 import type { LogOption } from './types/logs.js';
 import type { Message as MessageType } from './types/message.js';
 import { assertMinVersion } from './utils/autoUpdater.js';
-import { CLAUDE_IN_CHROME_SKILL_HINT, CLAUDE_IN_CHROME_SKILL_HINT_WITH_WEBBROWSER } from './utils/claudeInChrome/prompt.js';
-import { setupClaudeInChrome, shouldAutoEnableClaudeInChrome, shouldEnableClaudeInChrome } from './utils/claudeInChrome/setup.js';
+import { codepilot_IN_CHROME_SKILL_HINT, codepilot_IN_CHROME_SKILL_HINT_WITH_WEBBROWSER } from './utils/browserExtension/prompt.js';
+import { setupBrowserExtension, shouldAutoEnableBrowserExtension, shouldEnableBrowserExtension } from './utils/browserExtension/setup.js';
 import { getContextWindowForModel } from './utils/context.js';
 import { loadConversationForResume } from './utils/conversationRecovery.js';
 import { buildDeepLinkBanner } from './utils/deepLink/banner.js';
@@ -141,14 +141,14 @@ import { validateUuid } from './utils/uuid.js';
 import { registerMcpAddCommand } from 'src/commands/mcp/addCommand.js';
 import { registerMcpXaaIdpCommand } from 'src/commands/mcp/xaaIdpCommand.js';
 import { logPermissionContextForAnts } from 'src/services/internalLogging.js';
-import { fetchClaudeAIMcpConfigsIfEligible } from 'src/services/mcp/claudeai.js';
+import { fetchMcpConfigsIfEligible } from 'src/services/mcp/codepilot.js';
 import { clearServerCache } from 'src/services/mcp/client.js';
-import { areMcpConfigsAllowedWithEnterpriseMcpConfig, dedupClaudeAiMcpServers, doesEnterpriseMcpConfigExist, filterMcpServersByPolicy, getClaudeCodeMcpConfigs, getMcpServerSignature, parseMcpConfig, parseMcpConfigFromFilePath } from 'src/services/mcp/config.js';
+import { areMcpConfigsAllowedWithEnterpriseMcpConfig, dedupCodePilotMcpServers, doesEnterpriseMcpConfigExist, filterMcpServersByPolicy, getCodePilotMcpConfigs, getMcpServerSignature, parseMcpConfig, parseMcpConfigFromFilePath } from 'src/services/mcp/config.js';
 import { excludeCommandsByServer, excludeResourcesByServer } from 'src/services/mcp/utils.js';
 import { isXaaEnabled } from 'src/services/mcp/xaaIdpLogin.js';
 import { getRelevantTips } from 'src/services/tips/tipRegistry.js';
 import { logContextMetrics } from 'src/utils/api.js';
-import { CLAUDE_IN_CHROME_MCP_SERVER_NAME, isClaudeInChromeMCPServer } from 'src/utils/claudeInChrome/common.js';
+import { codepilot_IN_CHROME_MCP_SERVER_NAME, isBrowserExtensionMCPServer } from 'src/utils/browserExtension/common.js';
 import { registerCleanup } from 'src/utils/cleanupRegistry.js';
 import { eagerParseCliFlag } from 'src/utils/cliArgs.js';
 import { createEmptyAttributionState } from 'src/utils/commitAttribution.js';
@@ -444,7 +444,7 @@ function loadSettingsFromFlag(settingsFile: string): void {
 
       // Create a temporary file and write the JSON to it.
       // Use a content-hash-based path instead of random UUID to avoid
-      // busting the Anthropic API prompt cache. The settings path ends up
+      // busting the CodePilot API prompt cache. The settings path ends up
       // in the Bash tool's sandbox denyWithinAllow list, which is part of
       // the tool description sent to the API. A random UUID per subprocess
       // changes the tool description on every query() call, invalidating
@@ -539,7 +539,7 @@ function initializeEntrypoint(isNonInteractive: boolean): void {
   process.env.CODEPILOT_ENTRYPOINT = isNonInteractive ? 'sdk-cli' : 'cli';
 }
 
-// Set by early argv processing when `claude open <url>` is detected (interactive mode only)
+// Set by early argv processing when `codepilot open <url>` is detected (interactive mode only)
 type PendingConnect = {
   url: string | undefined;
   authToken: string | undefined;
@@ -551,7 +551,7 @@ const _pendingConnect: PendingConnect | undefined = feature('DIRECT_CONNECT') ? 
   dangerouslySkipPermissions: false
 } : undefined;
 
-// Set by early argv processing when `claude assistant [sessionId]` is detected
+// Set by early argv processing when `codepilot assistant [sessionId]` is detected
 type PendingAssistantChat = {
   sessionId?: string;
   discover: boolean;
@@ -561,7 +561,7 @@ const _pendingAssistantChat: PendingAssistantChat | undefined = feature('KAIROS'
   discover: false
 } : undefined;
 
-// `claude ssh <host> [dir]` — parsed from argv early (same pattern as
+// `codepilot ssh <host> [dir]` — parsed from argv early (same pattern as
 // DIRECT_CONNECT above) so the main command path can pick it up and hand
 // the REPL an SSH-backed session instead of a local one.
 type PendingSSH = {
@@ -663,7 +663,7 @@ export async function main() {
     // URL arrives via Apple Event (not argv). LaunchServices overwrites
     // __CFBundleIdentifier to the launching bundle's ID, which is a precise
     // positive signal — cheaper than importing and guessing with heuristics.
-    if (process.platform === 'darwin' && process.env.__CFBundleIdentifier === 'com.anthropic.claude-code-url-handler') {
+    if (process.platform === 'darwin' && process.env.__CFBundleIdentifier === 'com.codepilot.codepilot-code-url-handler') {
       const {
         enableConfigs
       } = await import('./utils/config.js');
@@ -676,10 +676,10 @@ export async function main() {
     }
   }
 
-  // `claude assistant [sessionId]` — stash and strip so the main
+  // `codepilot assistant [sessionId]` — stash and strip so the main
   // command handles it, giving the full interactive TUI. Position-0 only
   // (matching the ssh pattern below) — indexOf would false-positive on
-  // `claude -p "explain assistant"`. Root-flag-before-subcommand
+  // `codepilot -p "explain assistant"`. Root-flag-before-subcommand
   // (e.g. `--debug assistant`) falls through to the stub, which
   // prints usage.
   if (feature('KAIROS') && _pendingAssistantChat) {
@@ -695,11 +695,11 @@ export async function main() {
         rawArgs.splice(0, 1); // drop 'assistant'
         process.argv = [process.argv[0]!, process.argv[1]!, ...rawArgs];
       }
-      // else: `claude assistant --help` → fall through to stub
+      // else: `codepilot assistant --help` → fall through to stub
     }
   }
 
-  // `claude ssh <host> [dir]` — strip from argv so the main command handler
+  // `codepilot ssh <host> [dir]` — strip from argv so the main command handler
   // runs (full interactive TUI), stash the host/dir for the REPL branch at
   // ~line 3720 to pick up. Headless (-p) mode not supported in v1: SSH
   // sessions need the local REPL to drive them (interrupt, permissions).
@@ -708,7 +708,7 @@ export async function main() {
     // SSH-specific flags can appear before the host positional (e.g.
     // `ssh --permission-mode auto host /tmp` — standard POSIX flags-before-
     // positionals). Pull them all out BEFORE checking whether a host was
-    // given, so `claude ssh --permission-mode auto host` and `claude ssh host
+    // given, so `codepilot ssh --permission-mode auto host` and `codepilot ssh host
     // --permission-mode auto` are equivalent. The host check below only needs
     // to guard against `-h`/`--help` (which commander should handle).
     if (rawCliArgs[0] === 'ssh') {
@@ -734,7 +734,7 @@ export async function main() {
       }
       // Forward session-resume + model flags to the remote CLI's initial spawn.
       // --continue/-c and --resume <uuid> operate on the REMOTE session history
-      // (which persists under the remote's ~/.claude/projects/<cwd>/).
+      // (which persists under the remote's ~/.codepilot/projects/<cwd>/).
       // --model controls which model the remote uses.
       const extractFlag = (flag: string, opts: {
         hasValue?: boolean;
@@ -820,9 +820,9 @@ export async function main() {
     if (process.env.CODEPILOT_ENTRYPOINT === 'sdk-ts') return 'sdk-typescript';
     if (process.env.CODEPILOT_ENTRYPOINT === 'sdk-py') return 'sdk-python';
     if (process.env.CODEPILOT_ENTRYPOINT === 'sdk-cli') return 'sdk-cli';
-    if (process.env.CODEPILOT_ENTRYPOINT === 'claude-vscode') return 'claude-vscode';
+    if (process.env.CODEPILOT_ENTRYPOINT === 'codepilot-vscode') return 'codepilot-vscode';
     if (process.env.CODEPILOT_ENTRYPOINT === 'local-agent') return 'local-agent';
-    if (process.env.CODEPILOT_ENTRYPOINT === 'claude-desktop') return 'claude-desktop';
+    if (process.env.CODEPILOT_ENTRYPOINT === 'codepilot-desktop') return 'codepilot-desktop';
 
     // Check if session-ingress token is provided (indicates remote session)
     const hasSessionIngressToken = process.env.CODEPILOT_SESSION_ACCESS_TOKEN || process.env.CODEPILOT_WEBSOCKET_AUTH_FILE_DESCRIPTOR;
@@ -838,7 +838,7 @@ export async function main() {
   } else if (!clientType.startsWith('sdk-') &&
   // Desktop and CCR pass previewFormat via toolConfig; when the feature is
   // gated off they pass undefined — don't override that with markdown.
-  clientType !== 'claude-desktop' && clientType !== 'local-agent' && clientType !== 'remote') {
+  clientType !== 'codepilot-desktop' && clientType !== 'local-agent' && clientType !== 'remote') {
     setQuestionPreviewFormat('markdown');
   }
 
@@ -973,7 +973,7 @@ async function run(): Promise<CommanderCommand> {
     // If not provided but flag is present, value will be true
     // The actual filtering is handled in debug.ts by parsing process.argv
     return true;
-  }).addOption(new Option('-d2e, --debug-to-stderr', 'Enable debug mode (to stderr)').argParser(Boolean).hideHelp()).option('--debug-file <path>', 'Write debug logs to a specific file path (implicitly enables debug mode)', () => true).option('--verbose', 'Override verbose mode setting from config', () => true).option('-p, --print', 'Print response and exit (useful for pipes). Note: The workspace trust dialog is skipped when CodePilot is run with the -p mode. Only use this flag in directories you trust.', () => true).option('--bare', 'Minimal mode: skip hooks, LSP, plugin sync, attribution, auto-memory, background prefetches, keychain reads, and CLAUDE.md auto-discovery. Sets CODEPILOT_SIMPLE=1. Auth is strictly CODEPILOT_API_KEY or apiKeyHelper via --settings (OAuth and keychain are never read). 3P providers (Bedrock/Vertex/Foundry) use their own credentials. Skills still resolve via /skill-name. Explicitly provide context via: --system-prompt[-file], --append-system-prompt[-file], --add-dir (CLAUDE.md dirs), --mcp-config, --settings, --agents, --plugin-dir.', () => true).addOption(new Option('--init', 'Run Setup hooks with init trigger, then continue').hideHelp()).addOption(new Option('--init-only', 'Run Setup and SessionStart:startup hooks, then exit').hideHelp()).addOption(new Option('--maintenance', 'Run Setup hooks with maintenance trigger, then continue').hideHelp()).addOption(new Option('--output-format <format>', 'Output format (only works with --print): "text" (default), "json" (single result), or "stream-json" (realtime streaming)').choices(['text', 'json', 'stream-json'])).addOption(new Option('--json-schema <schema>', 'JSON Schema for structured output validation. ' + 'Example: {"type":"object","properties":{"name":{"type":"string"}},"required":["name"]}').argParser(String)).option('--include-hook-events', 'Include all hook lifecycle events in the output stream (only works with --output-format=stream-json)', () => true).option('--include-partial-messages', 'Include partial message chunks as they arrive (only works with --print and --output-format=stream-json)', () => true).addOption(new Option('--input-format <format>', 'Input format (only works with --print): "text" (default), or "stream-json" (realtime streaming input)').choices(['text', 'stream-json'])).option('--mcp-debug', '[DEPRECATED. Use --debug instead] Enable MCP debug mode (shows MCP server errors)', () => true).option('--dangerously-skip-permissions', 'Bypass all permission checks. Recommended only for sandboxes with no internet access.', () => true).option('--allow-dangerously-skip-permissions', 'Enable bypassing all permission checks as an option, without it being enabled by default. Recommended only for sandboxes with no internet access.', () => true).addOption(new Option('--thinking <mode>', 'Thinking mode: enabled (equivalent to adaptive), disabled').choices(['enabled', 'adaptive', 'disabled']).hideHelp()).addOption(new Option('--max-thinking-tokens <tokens>', '[DEPRECATED. Use --thinking instead for newer models] Maximum number of thinking tokens (only works with --print)').argParser(Number).hideHelp()).addOption(new Option('--max-turns <turns>', 'Maximum number of agentic turns in non-interactive mode. This will early exit the conversation after the specified number of turns. (only works with --print)').argParser(Number).hideHelp()).addOption(new Option('--max-budget-usd <amount>', 'Maximum dollar amount to spend on API calls (only works with --print)').argParser(value => {
+  }).addOption(new Option('-d2e, --debug-to-stderr', 'Enable debug mode (to stderr)').argParser(Boolean).hideHelp()).option('--debug-file <path>', 'Write debug logs to a specific file path (implicitly enables debug mode)', () => true).option('--verbose', 'Override verbose mode setting from config', () => true).option('-p, --print', 'Print response and exit (useful for pipes). Note: The workspace trust dialog is skipped when CodePilot is run with the -p mode. Only use this flag in directories you trust.', () => true).option('--bare', 'Minimal mode: skip hooks, LSP, plugin sync, attribution, auto-memory, background prefetches, keychain reads, and codepilot.md auto-discovery. Sets CODEPILOT_SIMPLE=1. Auth is strictly CODEPILOT_API_KEY or apiKeyHelper via --settings (OAuth and keychain are never read). 3P providers (Bedrock/Vertex/Foundry) use their own credentials. Skills still resolve via /skill-name. Explicitly provide context via: --system-prompt[-file], --append-system-prompt[-file], --add-dir (codepilot.md dirs), --mcp-config, --settings, --agents, --plugin-dir.', () => true).addOption(new Option('--init', 'Run Setup hooks with init trigger, then continue').hideHelp()).addOption(new Option('--init-only', 'Run Setup and SessionStart:startup hooks, then exit').hideHelp()).addOption(new Option('--maintenance', 'Run Setup hooks with maintenance trigger, then continue').hideHelp()).addOption(new Option('--output-format <format>', 'Output format (only works with --print): "text" (default), "json" (single result), or "stream-json" (realtime streaming)').choices(['text', 'json', 'stream-json'])).addOption(new Option('--json-schema <schema>', 'JSON Schema for structured output validation. ' + 'Example: {"type":"object","properties":{"name":{"type":"string"}},"required":["name"]}').argParser(String)).option('--include-hook-events', 'Include all hook lifecycle events in the output stream (only works with --output-format=stream-json)', () => true).option('--include-partial-messages', 'Include partial message chunks as they arrive (only works with --print and --output-format=stream-json)', () => true).addOption(new Option('--input-format <format>', 'Input format (only works with --print): "text" (default), or "stream-json" (realtime streaming input)').choices(['text', 'stream-json'])).option('--mcp-debug', '[DEPRECATED. Use --debug instead] Enable MCP debug mode (shows MCP server errors)', () => true).option('--dangerously-skip-permissions', 'Bypass all permission checks. Recommended only for sandboxes with no internet access.', () => true).option('--allow-dangerously-skip-permissions', 'Enable bypassing all permission checks as an option, without it being enabled by default. Recommended only for sandboxes with no internet access.', () => true).addOption(new Option('--thinking <mode>', 'Thinking mode: enabled (equivalent to adaptive), disabled').choices(['enabled', 'adaptive', 'disabled']).hideHelp()).addOption(new Option('--max-thinking-tokens <tokens>', '[DEPRECATED. Use --thinking instead for newer models] Maximum number of thinking tokens (only works with --print)').argParser(Number).hideHelp()).addOption(new Option('--max-turns <turns>', 'Maximum number of agentic turns in non-interactive mode. This will early exit the conversation after the specified number of turns. (only works with --print)').argParser(Number).hideHelp()).addOption(new Option('--max-budget-usd <amount>', 'Maximum dollar amount to spend on API calls (only works with --print)').argParser(value => {
     const amount = Number(value);
     if (isNaN(amount) || amount <= 0) {
       throw new Error('--max-budget-usd must be a positive number greater than 0');
@@ -990,7 +990,7 @@ async function run(): Promise<CommanderCommand> {
     return Number.isFinite(n) ? n : undefined;
   }).hideHelp()).option('--from-pr [value]', 'Resume a session linked to a PR by PR number/URL, or open interactive picker with optional search term', value => value || true).option('--no-session-persistence', 'Disable session persistence - sessions will not be saved to disk and cannot be resumed (only works with --print)').addOption(new Option('--resume-session-at <message id>', 'When resuming, only messages up to and including the assistant message with <message.id> (use with --resume in print mode)').argParser(String).hideHelp()).addOption(new Option('--rewind-files <user-message-id>', 'Restore files to state at the specified user message and exit (requires --resume)').hideHelp())
   // @[MODEL LAUNCH]: Update the example model ID in the --model help text.
-  .option('--model <model>', `Model for the current session. Provide an alias for the latest model (e.g. 'sonnet' or 'opus') or a model's full name (e.g. 'claude-sonnet-4-6').`).addOption(new Option('--effort <level>', `Effort level for the current session (low, medium, high, max)`).argParser((rawValue: string) => {
+  .option('--model <model>', `Model for the current session. Provide an alias for the latest model (e.g. 'sonnet' or 'opus') or a model's full name (e.g. 'codepilot-sonnet-4-6').`).addOption(new Option('--effort <level>', `Effort level for the current session (low, medium, high, max)`).argParser((rawValue: string) => {
     const value = rawValue.toLowerCase();
     const allowed = ['low', 'medium', 'high', 'max'];
     if (!allowed.includes(value)) {
@@ -999,15 +999,15 @@ async function run(): Promise<CommanderCommand> {
     return value;
   })).option('--agent <agent>', `Agent for the current session. Overrides the 'agent' setting.`).option('--betas <betas...>', 'Beta headers to include in API requests (API key users only)').option('--fallback-model <model>', 'Enable automatic fallback to specified model when default model is overloaded (only works with --print)').addOption(new Option('--workload <tag>', 'Workload tag for billing-header attribution (cc_workload). Process-scoped; set by SDK daemon callers that spawn subprocesses for cron work. (only works with --print)').hideHelp()).option('--settings <file-or-json>', 'Path to a settings JSON file or a JSON string to load additional settings from').option('--add-dir <directories...>', 'Additional directories to allow tool access to').option('--ide', 'Automatically connect to IDE on startup if exactly one valid IDE is available', () => true).option('--strict-mcp-config', 'Only use MCP servers from --mcp-config, ignoring all other MCP configurations', () => true).option('--session-id <uuid>', 'Use a specific session ID for the conversation (must be a valid UUID)').option('-n, --name <name>', 'Set a display name for this session (shown in /resume and terminal title)').option('--agents <json>', 'JSON object defining custom agents (e.g. \'{"reviewer": {"description": "Reviews code", "prompt": "You are a code reviewer"}}\')').option('--setting-sources <sources>', 'Comma-separated list of setting sources to load (user, project, local).')
   // gh-33508: <paths...> (variadic) consumed everything until the next
-  // --flag. `claude --plugin-dir /path mcp add --transport http` swallowed
+  // --flag. `codepilot --plugin-dir /path mcp add --transport http` swallowed
   // `mcp` and `add` as paths, then choked on --transport as an unknown
   // top-level option. Single-value + collect accumulator means each
   // --plugin-dir takes exactly one arg; repeat the flag for multiple dirs.
-  .option('--plugin-dir <path>', 'Load plugins from a directory for this session only (repeatable: --plugin-dir A --plugin-dir B)', (val: string, prev: string[]) => [...prev, val], [] as string[]).option('--disable-slash-commands', 'Disable all skills', () => true).option('--chrome', 'Enable Claude in Chrome integration').option('--no-chrome', 'Disable Claude in Chrome integration').option('--file <specs...>', 'File resources to download at startup. Format: file_id:relative_path (e.g., --file file_abc:doc.txt file_def:img.png)').action(async (prompt, options) => {
+  .option('--plugin-dir <path>', 'Load plugins from a directory for this session only (repeatable: --plugin-dir A --plugin-dir B)', (val: string, prev: string[]) => [...prev, val], [] as string[]).option('--disable-slash-commands', 'Disable all skills', () => true).option('--chrome', 'Enable CodePilot in Browser integration').option('--no-chrome', 'Disable CodePilot in Browser integration').option('--file <specs...>', 'File resources to download at startup. Format: file_id:relative_path (e.g., --file file_abc:doc.txt file_def:img.png)').action(async (prompt, options) => {
     profileCheckpoint('action_handler_start');
 
     // --bare = one-switch minimal mode. Sets SIMPLE so all the existing
-    // gates fire (CLAUDE.md, skills, hooks inside executeHooks, agent
+    // gates fire (codepilot.md, skills, hooks inside executeHooks, agent
     // dir-walk). Must be set before setup() / any of the gated work runs.
     if ((options as {
       bare?: boolean;
@@ -1030,7 +1030,7 @@ async function run(): Promise<CommanderCommand> {
       });
     }
 
-    // Assistant mode: when .claude/settings.json has assistant: true AND
+    // Assistant mode: when .codepilot/settings.json has assistant: true AND
     // the tengu_kairos GrowthBook gate is on, force brief on. Permission
     // mode is left to the user — settings defaultMode or --permission-mode
     // apply as normal. REPL-typed messages already default to 'next'
@@ -1040,10 +1040,10 @@ async function run(): Promise<CommanderCommand> {
     // kairosEnabled is computed once here and reused at the
     // getAssistantSystemPromptAddendum() call site further down.
     //
-    // Trust gate: .claude/settings.json is attacker-controllable in an
+    // Trust gate: .codepilot/settings.json is attacker-controllable in an
     // untrusted clone. We run ~1000 lines before showSetupScreens() shows
     // the trust dialog, and by then we've already appended
-    // .claude/agents/assistant.md to the system prompt. Refuse to activate
+    // .codepilot/agents/assistant.md to the system prompt. Refuse to activate
     // until the directory has been explicitly trusted.
     let kairosEnabled = false;
     let assistantTeamContext: Awaited<ReturnType<NonNullable<typeof assistantModule>['initializeAssistantTeam']>> | undefined;
@@ -1472,8 +1472,8 @@ async function run(): Promise<CommanderCommand> {
         // built-in names — skip reserved-name checks for type:'sdk'.
         const nonSdkConfigNames = Object.entries(allConfigs).filter(([, config]) => config.type !== 'sdk').map(([name]) => name);
         let reservedNameError: string | null = null;
-        if (nonSdkConfigNames.some(isClaudeInChromeMCPServer)) {
-          reservedNameError = `Invalid MCP configuration: "${CLAUDE_IN_CHROME_MCP_SERVER_NAME}" is a reserved MCP name.`;
+        if (nonSdkConfigNames.some(isBrowserExtensionMCPServer)) {
+          reservedNameError = `Invalid MCP configuration: "${codepilot_IN_CHROME_MCP_SERVER_NAME}" is a reserved MCP name.`;
         } else if (feature('CHICAGO_MCP')) {
           const {
             isComputerUseMCPServer,
@@ -1505,7 +1505,7 @@ async function run(): Promise<CommanderCommand> {
         // Enforce managed policy (allowedMcpServers / deniedMcpServers) on
         // --mcp-config servers. Without this, the CLI flag bypasses the
         // enterprise allowlist that user/project/local configs go through in
-        // getClaudeCodeMcpConfigs — callers spread dynamicMcpConfig back on
+        // getCodePilotMcpConfigs — callers spread dynamicMcpConfig back on
         // top of filtered results. Filter here at the source so all
         // downstream consumers see the policy-filtered set.
         const {
@@ -1522,25 +1522,25 @@ async function run(): Promise<CommanderCommand> {
       }
     }
 
-    // Extract Claude in Chrome option and enforce claude.ai subscriber check (unless user is ant)
+    // Extract CodePilot in Browser option and enforce codepilot.local subscriber check (unless user is ant)
     const chromeOpts = options as {
       chrome?: boolean;
     };
     // Store the explicit CLI flag so teammates can inherit it
     setChromeFlagOverride(chromeOpts.chrome);
-    const enableClaudeInChrome = shouldEnableClaudeInChrome(chromeOpts.chrome) && ("external" === 'ant' || isClaudeAISubscriber());
-    const autoEnableClaudeInChrome = !enableClaudeInChrome && shouldAutoEnableClaudeInChrome();
-    if (enableClaudeInChrome) {
+    const enableBrowserExtension = shouldEnableBrowserExtension(chromeOpts.chrome) && ("external" === 'ant' || isSubscriber());
+    const autoEnableBrowserExtension = !enableBrowserExtension && shouldAutoEnableBrowserExtension();
+    if (enableBrowserExtension) {
       const platform = getPlatform();
       try {
-        logEvent('tengu_claude_in_chrome_setup', {
+        logEvent('tengu_codepilot_in_chrome_setup', {
           platform: platform as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
         const {
           mcpConfig: chromeMcpConfig,
           allowedTools: chromeMcpTools,
           systemPrompt: chromeSystemPrompt
-        } = setupClaudeInChrome();
+        } = setupBrowserExtension();
         dynamicMcpConfig = {
           ...dynamicMcpConfig,
           ...chromeMcpConfig
@@ -1550,7 +1550,7 @@ async function run(): Promise<CommanderCommand> {
           appendSystemPrompt = appendSystemPrompt ? `${chromeSystemPrompt}\n\n${appendSystemPrompt}` : chromeSystemPrompt;
         }
       } catch (error) {
-        logEvent('tengu_claude_in_chrome_setup_failed', {
+        logEvent('tengu_codepilot_in_chrome_setup_failed', {
           platform: platform as AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS
         });
         logForDebugging(`[CodePilot in Chrome] Error: ${error}`);
@@ -1559,16 +1559,16 @@ async function run(): Promise<CommanderCommand> {
         console.error(`Error: Failed to run with CodePilot in Chrome.`);
         process.exit(1);
       }
-    } else if (autoEnableClaudeInChrome) {
+    } else if (autoEnableBrowserExtension) {
       try {
         const {
           mcpConfig: chromeMcpConfig
-        } = setupClaudeInChrome();
+        } = setupBrowserExtension();
         dynamicMcpConfig = {
           ...dynamicMcpConfig,
           ...chromeMcpConfig
         };
-        const hint = feature('WEB_BROWSER_TOOL') && typeof Bun !== 'undefined' && 'WebView' in Bun ? CLAUDE_IN_CHROME_SKILL_HINT_WITH_WEBBROWSER : CLAUDE_IN_CHROME_SKILL_HINT;
+        const hint = feature('WEB_BROWSER_TOOL') && typeof Bun !== 'undefined' && 'WebView' in Bun ? codepilot_IN_CHROME_SKILL_HINT_WITH_WEBBROWSER : codepilot_IN_CHROME_SKILL_HINT;
         appendSystemPrompt = appendSystemPrompt ? `${appendSystemPrompt}\n\n${hint}` : hint;
       } catch (error) {
         // Silently skip any errors for the auto-enable
@@ -1629,8 +1629,8 @@ async function run(): Promise<CommanderCommand> {
       }
     }
 
-    // Store additional directories for CLAUDE.md loading (controlled by env var)
-    setAdditionalDirectoriesForClaudeMd(addDir);
+    // Store additional directories for codepilot.md loading (controlled by env var)
+    setAdditionalDirectoriesForConfigMd(addDir);
 
     // Channel server allowlist from --channels flag — servers whose
     // inbound push notifications should register this session. The option
@@ -1777,15 +1777,15 @@ async function run(): Promise<CommanderCommand> {
     });
     void assertMinVersion();
 
-    // claude.ai config fetch: -p mode only (interactive uses useManageMCPConnections
+    // codepilot.local config fetch: -p mode only (interactive uses useManageMCPConnections
     // two-phase loading). Kicked off here to overlap with setup(); awaited
     // before runHeadless so single-turn -p sees connectors. Skipped under
     // enterprise/strict MCP to preserve policy boundaries.
-    const claudeaiConfigPromise: Promise<Record<string, ScopedMcpServerConfig>> = isNonInteractiveSession && !strictMcpConfig && !doesEnterpriseMcpConfigExist() &&
-    // --bare / SIMPLE: skip claude.ai proxy servers (datadog, Gmail,
+    const codepilotConfigPromise: Promise<Record<string, ScopedMcpServerConfig>> = isNonInteractiveSession && !strictMcpConfig && !doesEnterpriseMcpConfigExist() &&
+    // --bare / SIMPLE: skip codepilot.local proxy servers (datadog, Gmail,
     // Slack, BigQuery, PubMed — 6-14s each to connect). Scripted calls
     // that need MCP pass --mcp-config explicitly.
-    !isBareMode() ? fetchClaudeAIMcpConfigsIfEligible().then(configs => {
+    !isBareMode() ? fetchMcpConfigsIfEligible().then(configs => {
       const {
         allowed,
         blocked
@@ -1797,7 +1797,7 @@ async function run(): Promise<CommanderCommand> {
     }) : Promise.resolve({});
 
     // Kick off MCP config loading early (safe - just reads files, no execution).
-    // Both interactive and -p use getClaudeCodeMcpConfigs (local file reads only).
+    // Both interactive and -p use getCodePilotMcpConfigs (local file reads only).
     // The local promise is awaited later (before prefetchAllMcpResources) to
     // overlap config I/O with setup(), commands loading, and trust dialog.
     logForDebugging('[STARTUP] Loading MCP configs...');
@@ -1808,7 +1808,7 @@ async function run(): Promise<CommanderCommand> {
     // allMcpConfigs downstream so it survives this skip.
     const mcpConfigPromise = (strictMcpConfig || isBareMode() ? Promise.resolve({
       servers: {} as Record<string, ScopedMcpServerConfig>
-    }) : getClaudeCodeMcpConfigs(dynamicMcpConfig)).then(result => {
+    }) : getCodePilotMcpConfigs(dynamicMcpConfig)).then(result => {
       mcpConfigResolvedMs = Date.now() - mcpConfigStart;
       return result;
     });
@@ -1951,7 +1951,7 @@ async function run(): Promise<CommanderCommand> {
     }
     if (getIsNonInteractiveSession()) {
       // Apply full merged settings env now (including project-scoped
-      // .claude/settings.json PATH/GIT_DIR/GIT_WORK_TREE) so gitExe() and
+      // .codepilot/settings.json PATH/GIT_DIR/GIT_WORK_TREE) so gitExe() and
       // the git spawn below see it. Trust is implicit in -p mode; the
       // docstring at managedEnv.ts:96-97 says this applies "potentially
       // dangerous environment variables such as LD_PRELOAD, PATH" from all
@@ -1976,7 +1976,7 @@ async function run(): Promise<CommanderCommand> {
       // (same gate as prefetchSystemContextIfSafe).
       void getSystemContext();
       // Kick getUserContext now too — its first await (fs.readFile in
-      // getMemoryFiles) yields naturally, so the CLAUDE.md directory walk
+      // getMemoryFiles) yields naturally, so the codepilot.md directory walk
       // runs during the ~280ms overlap window before the context
       // Promise.all join in print.ts. The void getUserContext() in
       // startDeferredPrefetches becomes a memoize cache-hit.
@@ -2238,7 +2238,7 @@ async function run(): Promise<CommanderCommand> {
       });
       logForDebugging('[STARTUP] Running showSetupScreens()...');
       const setupScreensStart = Date.now();
-      const onboardingShown = await showSetupScreens(root, permissionMode, allowDangerouslySkipPermissions, commands, enableClaudeInChrome, devChannels);
+      const onboardingShown = await showSetupScreens(root, permissionMode, allowDangerouslySkipPermissions, commands, enableBrowserExtension, devChannels);
       logForDebugging(`[STARTUP] showSetupScreens() completed in ${Date.now() - setupScreensStart}ms`);
 
       // Now that trust is established and GrowthBook has auth headers,
@@ -2283,7 +2283,7 @@ async function run(): Promise<CommanderCommand> {
         void refreshPolicyLimits();
         // Clear user data cache BEFORE GrowthBook refresh so it picks up fresh credentials
         resetUserCache();
-        // Refresh GrowthBook after login to get updated feature flags (e.g., for claude.ai MCPs)
+        // Refresh GrowthBook after login to get updated feature flags (e.g., for codepilot.local MCPs)
         refreshGrowthBookAfterAuthChange();
         // Clear any stale trusted device token then enroll for Remote Control.
         // Both self-gate on tengu_sessions_elevated_auth_enforcement internally
@@ -2410,11 +2410,11 @@ async function run(): Promise<CommanderCommand> {
       tools: [],
       commands: []
     }) : prefetchAllMcpResources(regularMcpConfigs);
-    const claudeaiMcpPromise = isNonInteractiveSession ? Promise.resolve({
+    const codepilotMcpPromise = isNonInteractiveSession ? Promise.resolve({
       clients: [],
       tools: [],
       commands: []
-    }) : claudeaiConfigPromise.then(configs => Object.keys(configs).length > 0 ? prefetchAllMcpResources(configs) : {
+    }) : codepilotConfigPromise.then(configs => Object.keys(configs).length > 0 ? prefetchAllMcpResources(configs) : {
       clients: [],
       tools: [],
       commands: []
@@ -2423,10 +2423,10 @@ async function run(): Promise<CommanderCommand> {
     // adds helper tools (ListMcpResourcesTool, ReadMcpResourceTool) via
     // local dedup flags, so merging two calls can yield duplicates. print.ts
     // already uniqBy's the final tool pool, but dedup here keeps appState clean.
-    const mcpPromise = Promise.all([localMcpPromise, claudeaiMcpPromise]).then(([local, claudeai]) => ({
-      clients: [...local.clients, ...claudeai.clients],
-      tools: uniqBy([...local.tools, ...claudeai.tools], 'name'),
-      commands: uniqBy([...local.commands, ...claudeai.commands], 'name')
+    const mcpPromise = Promise.all([localMcpPromise, codepilotMcpPromise]).then(([local, codepilot]) => ({
+      clients: [...local.clients, ...codepilot.clients],
+      tools: uniqBy([...local.tools, ...codepilot.tools], 'name'),
+      commands: uniqBy([...local.commands, ...codepilot.commands], 'name')
     }));
 
     // Start hooks early so they run in parallel with MCP connections.
@@ -2523,9 +2523,9 @@ async function run(): Promise<CommanderCommand> {
     void logPermissionContextForAnts(null, 'initialization');
     logManagedSettings();
 
-    // Register PID file for concurrent-session detection (~/.claude/sessions/)
+    // Register PID file for concurrent-session detection (~/.codepilot/sessions/)
     // and fire multi-clauding telemetry. Lives here (not init.ts) so only the
-    // REPL path registers — not subcommands like `claude doctor`. Chained:
+    // REPL path registers — not subcommands like `codepilot doctor`. Chained:
     // count must run after register's write completes or it misses our own file.
     void registerSession().then(registered => {
       if (!registered) return;
@@ -2722,35 +2722,35 @@ async function run(): Promise<CommanderCommand> {
       // message and turn-1 tool list both need configured MCP tools present.
       // Zero-server case is free via the early return in connectMcpBatch.
       // Connectors parallelize inside getMcpToolsCommandsAndResources
-      // (processBatched with Promise.all). claude.ai is awaited too — its
+      // (processBatched with Promise.all). codepilot.local is awaited too — its
       // fetch was kicked off early (line ~2558) so only residual time blocks
-      // here. --bare skips claude.ai entirely for perf-sensitive scripts.
+      // here. --bare skips codepilot.local entirely for perf-sensitive scripts.
       profileCheckpoint('before_connectMcp');
       await connectMcpBatch(regularMcpConfigs, 'regular');
       profileCheckpoint('after_connectMcp');
-      // Dedup: suppress plugin MCP servers that duplicate a claude.ai
-      // connector (connector wins), then connect claude.ai servers.
+      // Dedup: suppress plugin MCP servers that duplicate a codepilot.local
+      // connector (connector wins), then connect codepilot.local servers.
       // Bounded wait — #23725 made this blocking so single-turn -p sees
       // connectors, but with 40+ slow connectors tengu_startup_perf p99
       // climbed to 76s. If fetch+connect doesn't finish in time, proceed;
       // the promise keeps running and updates headlessStore in the
       // background so turn 2+ still sees connectors.
-      const CLAUDE_AI_MCP_TIMEOUT_MS = 5_000;
-      const claudeaiConnect = claudeaiConfigPromise.then(claudeaiConfigs => {
-        if (Object.keys(claudeaiConfigs).length > 0) {
-          const claudeaiSigs = new Set<string>();
-          for (const config of Object.values(claudeaiConfigs)) {
+      const codepilot_AI_MCP_TIMEOUT_MS = 5_000;
+      const codepilotConnect = codepilotConfigPromise.then(codepilotConfigs => {
+        if (Object.keys(codepilotConfigs).length > 0) {
+          const codepilotSigs = new Set<string>();
+          for (const config of Object.values(codepilotConfigs)) {
             const sig = getMcpServerSignature(config);
-            if (sig) claudeaiSigs.add(sig);
+            if (sig) codepilotSigs.add(sig);
           }
           const suppressed = new Set<string>();
           for (const [name, config] of Object.entries(regularMcpConfigs)) {
             if (!name.startsWith('plugin:')) continue;
             const sig = getMcpServerSignature(config);
-            if (sig && claudeaiSigs.has(sig)) suppressed.add(name);
+            if (sig && codepilotSigs.has(sig)) suppressed.add(name);
           }
           if (suppressed.size > 0) {
-            logForDebugging(`[MCP] Lazy dedup: suppressing ${suppressed.size} plugin server(s) that duplicate claude.ai connectors: ${[...suppressed].join(', ')}`);
+            logForDebugging(`[MCP] Lazy dedup: suppressing ${suppressed.size} plugin server(s) that duplicate codepilot.local connectors: ${[...suppressed].join(', ')}`);
             // Disconnect before filtering from state. Only connected
             // servers need cleanup — clearServerCache on a never-connected
             // server triggers a real connect just to kill it (memoize
@@ -2786,27 +2786,27 @@ async function run(): Promise<CommanderCommand> {
             });
           }
         }
-        // Suppress claude.ai connectors that duplicate an enabled
+        // Suppress codepilot.local connectors that duplicate an enabled
         // manual server (URL-signature match). Plugin dedup above only
         // handles `plugin:*` keys; this catches manual `.mcp.json` entries.
         // plugin:* must be excluded here — step 1 already suppressed
-        // those (claude.ai wins); leaving them in suppresses the
+        // those (codepilot.local wins); leaving them in suppresses the
         // connector too, and neither survives (gh-39974).
         const nonPluginConfigs = pickBy(regularMcpConfigs, (_, n) => !n.startsWith('plugin:'));
         const {
-          servers: dedupedClaudeAi
-        } = dedupClaudeAiMcpServers(claudeaiConfigs, nonPluginConfigs);
-        return connectMcpBatch(dedupedClaudeAi, 'claudeai');
+          servers: dedupedCodePilot
+        } = dedupCodePilotMcpServers(codepilotConfigs, nonPluginConfigs);
+        return connectMcpBatch(dedupedCodePilot, 'codepilot');
       });
-      let claudeaiTimer: ReturnType<typeof setTimeout> | undefined;
-      const claudeaiTimedOut = await Promise.race([claudeaiConnect.then(() => false), new Promise<boolean>(resolve => {
-        claudeaiTimer = setTimeout(r => r(true), CLAUDE_AI_MCP_TIMEOUT_MS, resolve);
+      let codepilotTimer: ReturnType<typeof setTimeout> | undefined;
+      const codepilotTimedOut = await Promise.race([codepilotConnect.then(() => false), new Promise<boolean>(resolve => {
+        codepilotTimer = setTimeout(r => r(true), codepilot_AI_MCP_TIMEOUT_MS, resolve);
       })]);
-      if (claudeaiTimer) clearTimeout(claudeaiTimer);
-      if (claudeaiTimedOut) {
-        logForDebugging(`[MCP] claude.ai connectors not ready after ${CLAUDE_AI_MCP_TIMEOUT_MS}ms — proceeding; background connection continues`);
+      if (codepilotTimer) clearTimeout(codepilotTimer);
+      if (codepilotTimedOut) {
+        logForDebugging(`[MCP] codepilot.local connectors not ready after ${codepilot_AI_MCP_TIMEOUT_MS}ms — proceeding; background connection continues`);
       }
-      profileCheckpoint('after_connectMcp_claudeai');
+      profileCheckpoint('after_connectMcp_codepilot');
 
       // In headless mode, start deferred prefetches immediately (no user typing delay)
       // --bare / SIMPLE: startDeferredPrefetches early-returns internally.
@@ -3054,11 +3054,11 @@ async function run(): Promise<CommanderCommand> {
     });
 
     // Set up per-turn session environment data uploader (ant-only build).
-    // Default-enabled for all ant users when working in an Anthropic-owned
+    // Default-enabled for all ant users when working in an CodePilot-owned
     // repo. Captures git/filesystem state (NOT transcripts) at each turn so
     // environments can be recreated at any user message index. Gating:
     //   - Build-time: this import is stubbed in external builds.
-    //   - Runtime: uploader checks github.com/anthropics/* remote + gcloud auth.
+    //   - Runtime: uploader checks github.com/codepilots/* remote + gcloud auth.
     //   - Safety: CODEPILOT_DISABLE_SESSION_DATA_UPLOAD=1 bypasses (tests set this).
     // Import is dynamic + async to avoid adding startup latency.
     const sessionUploaderPromise = "external" === 'ant' ? import('./utils/sessionDataUploader.js') : null;
@@ -3154,7 +3154,7 @@ async function run(): Promise<CommanderCommand> {
         process.exit(1);
       }
     } else if (feature('DIRECT_CONNECT') && _pendingConnect?.url) {
-      // `claude connect <url>` — full interactive TUI connected to a remote server
+      // `codepilot connect <url>` — full interactive TUI connected to a remote server
       let directConnectConfig;
       try {
         const session = await createDirectConnectSession({
@@ -3191,7 +3191,7 @@ async function run(): Promise<CommanderCommand> {
       }, renderAndRun);
       return;
     } else if (feature('SSH_REMOTE') && _pendingSSH?.host) {
-      // `claude ssh <host> [dir]` — probe remote, deploy binary if needed,
+      // `codepilot ssh <host> [dir]` — probe remote, deploy binary if needed,
       // spawn ssh with unix-socket -R forward to a local auth proxy, hand
       // the REPL an SSHSession. Tools run remotely, UI renders locally.
       // `--local` skips probe/deploy/ssh and spawns the current binary
@@ -3257,7 +3257,7 @@ async function run(): Promise<CommanderCommand> {
       }, renderAndRun);
       return;
     } else if (feature('KAIROS') && _pendingAssistantChat && (_pendingAssistantChat.sessionId || _pendingAssistantChat.discover)) {
-      // `claude assistant [sessionId]` — REPL as a pure viewer client
+      // `codepilot assistant [sessionId]` — REPL as a pure viewer client
       // of a remote assistant session. The agentic loop runs remotely; this
       // process streams live events and POSTs messages. History is lazy-
       // loaded by useAssistantHistory on scroll-up (no blocking fetch here).
@@ -3310,7 +3310,7 @@ async function run(): Promise<CommanderCommand> {
       // getAccessToken closure for the token so reconnects get fresh tokens.
       const {
         checkAndRefreshOAuthTokenIfNeeded,
-        getClaudeAIOAuthTokens
+        getOAuthTokens
       } = await import('./utils/auth.js');
       await checkAndRefreshOAuthTokenIfNeeded();
       let apiCreds;
@@ -3319,7 +3319,7 @@ async function run(): Promise<CommanderCommand> {
       } catch (e) {
         return await exitWithError(root, `Error: ${e instanceof Error ? e.message : 'Failed to authenticate'}`, () => gracefulShutdown(1));
       }
-      const getAccessToken = (): string => getClaudeAIOAuthTokens()?.accessToken ?? apiCreds.accessToken;
+      const getAccessToken = (): string => getOAuthTokens()?.accessToken ?? apiCreds.accessToken;
 
       // Brief mode activation: setKairosActive(true) satisfies BOTH opt-in
       // and entitlement for isBriefEnabled() (BriefTool.ts:124-132).
@@ -3461,7 +3461,7 @@ async function run(): Promise<CommanderCommand> {
 
         // Create remote session config for the REPL
         const {
-          getClaudeAIOAuthTokens: getTokensForRemote
+          getOAuthTokens: getTokensForRemote
         } = await import('./utils/auth.js');
         const getAccessTokenForRemote = (): string => getTokensForRemote()?.accessToken ?? apiCreds.accessToken;
         const remoteSessionConfig = createRemoteSessionConfig(createdSession.id, getAccessTokenForRemote, apiCreds.orgUUID, hasInitialPrompt);
@@ -3775,7 +3775,7 @@ async function run(): Promise<CommanderCommand> {
       // knows the session originated externally. Linux xdg-open and
       // browsers with "always allow" set dispatch the link with no OS-level
       // confirmation, so this is the only signal the user gets that the
-      // prompt — and the working directory / CLAUDE.md it implies — came
+      // prompt — and the working directory / codepilot.md it implies — came
       // from an external source rather than something they typed.
       let deepLinkBanner: ReturnType<typeof createSystemMessage> | null = null;
       if (feature('LODESTONE')) {
@@ -3889,7 +3889,7 @@ async function run(): Promise<CommanderCommand> {
     return program;
   }
 
-  // claude mcp
+  // codepilot mcp
 
   const mcp = program.command('mcp').description('Configure and manage MCP servers').configureHelp(createSortedHelpConfig()).enablePositionalOptions();
   mcp.command('serve').description(`Start the CodePilot MCP server`).option('-d, --debug', 'Enable debug mode', () => true).option('--verbose', 'Override verbose mode setting from config', () => true).action(async ({
@@ -3942,7 +3942,7 @@ async function run(): Promise<CommanderCommand> {
     } = await import('./cli/handlers/mcp.js');
     await mcpAddJsonHandler(name, json, options);
   });
-  mcp.command('add-from-claude-desktop').description('Import MCP servers from CodePilot Desktop (Mac and WSL only)').option('-s, --scope <scope>', 'Configuration scope (local, user, or project)', 'local').action(async (options: {
+  mcp.command('add-from-codepilot-desktop').description('Import MCP servers from CodePilot Desktop (Mac and WSL only)').option('-s, --scope <scope>', 'Configuration scope (local, user, or project)', 'local').action(async (options: {
     scope?: string;
   }) => {
     const {
@@ -3957,7 +3957,7 @@ async function run(): Promise<CommanderCommand> {
     await mcpResetChoicesHandler();
   });
 
-  // claude server
+  // codepilot server
   if (feature('DIRECT_CONNECT')) {
     program.command('server').description('Start a CodePilot session server').option('--port <number>', 'HTTP port', '0').option('--host <string>', 'Bind address', '0.0.0.0').option('--auth-token <token>', 'Bearer token for auth').option('--unix <path>', 'Listen on a unix domain socket').option('--workspace <dir>', 'Default working directory for sessions that do not specify cwd').option('--idle-timeout <ms>', 'Idle timeout for detached sessions in ms (0 = never expire)', '600000').option('--max-sessions <n>', 'Maximum concurrent sessions (0 = unlimited)', '32').action(async (opts: {
       port: string;
@@ -4037,11 +4037,11 @@ async function run(): Promise<CommanderCommand> {
     });
   }
 
-  // `claude ssh <host> [dir]` — registered here only so --help shows it.
+  // `codepilot ssh <host> [dir]` — registered here only so --help shows it.
   // The actual interactive flow is handled by early argv rewriting in main()
   // (parallels the DIRECT_CONNECT/cc:// pattern above). If commander reaches
   // this action it means the argv rewrite didn't fire (e.g. user ran
-  // `claude ssh` with no host) — just print usage.
+  // `codepilot ssh` with no host) — just print usage.
   if (feature('SSH_REMOTE')) {
     program.command('ssh <host> [dir]').description('Run CodePilot on a remote host over SSH. Deploys the binary and ' + 'tunnels API auth back through your local machine — no remote setup needed.').option('--permission-mode <mode>', 'Permission mode for the remote session').option('--dangerously-skip-permissions', 'Skip all permission prompts on the remote (dangerous)').option('--local', 'e2e test mode — spawn the child CLI locally (skip ssh/deploy). ' + 'Exercises the auth proxy and unix-socket plumbing without a remote host.').action(async () => {
       // Argv rewriting in main() should have consumed `ssh <host>` before
@@ -4052,7 +4052,7 @@ async function run(): Promise<CommanderCommand> {
     });
   }
 
-  // claude connect — subcommand only handles -p (headless) mode.
+  // codepilot connect — subcommand only handles -p (headless) mode.
   // Interactive mode (without -p) is handled by early argv rewriting in main()
   // which redirects to the main command with full TUI support.
   if (feature('DIRECT_CONNECT')) {
@@ -4095,19 +4095,19 @@ async function run(): Promise<CommanderCommand> {
     });
   }
 
-  // claude auth
+  // codepilot auth
 
   const auth = program.command('auth').description('Manage authentication').configureHelp(createSortedHelpConfig());
-  auth.command('login').description('Sign in to your CodePilot account').option('--email <email>', 'Pre-populate email address on the login page').option('--sso', 'Force SSO login flow').option('--console', 'Use CodePilot Console (API usage billing) instead of CodePilot subscription').option('--claudeai', 'Use CodePilot subscription (default)').action(async ({
+  auth.command('login').description('Sign in to your CodePilot account').option('--email <email>', 'Pre-populate email address on the login page').option('--sso', 'Force SSO login flow').option('--console', 'Use CodePilot Console (API usage billing) instead of CodePilot subscription').option('--codepilot', 'Use CodePilot subscription (default)').action(async ({
     email,
     sso,
     console: useConsole,
-    claudeai
+    codepilot
   }: {
     email?: string;
     sso?: boolean;
     console?: boolean;
-    claudeai?: boolean;
+    codepilot?: boolean;
   }) => {
     const {
       authLogin
@@ -4116,7 +4116,7 @@ async function run(): Promise<CommanderCommand> {
       email,
       sso,
       console: useConsole,
-      claudeai
+      codepilot
     });
   });
   auth.command('status').description('Show authentication status').option('--json', 'Output as JSON (default)').option('--text', 'Output as human-readable text').action(async (opts: {
@@ -4169,7 +4169,7 @@ async function run(): Promise<CommanderCommand> {
 
   // Marketplace subcommands
   const marketplaceCmd = pluginCmd.command('marketplace').description('Manage CodePilot marketplaces').configureHelp(createSortedHelpConfig());
-  marketplaceCmd.command('add <source>').description('Add a marketplace from a URL, path, or GitHub repo').addOption(coworkOption()).option('--sparse <paths...>', 'Limit checkout to specific directories via git sparse-checkout (for monorepos). Example: --sparse .claude-plugin plugins').option('--scope <scope>', 'Where to declare the marketplace: user (default), project, or local').action(async (source: string, options: {
+  marketplaceCmd.command('add <source>').description('Add a marketplace from a URL, path, or GitHub repo').addOption(coworkOption()).option('--sparse <paths...>', 'Limit checkout to specific directories via git sparse-checkout (for monorepos). Example: --sparse .codepilot-plugin plugins').option('--scope <scope>', 'Where to declare the marketplace: user (default), project, or local').action(async (source: string, options: {
     cowork?: boolean;
     sparse?: string[];
     scope?: string;
@@ -4217,7 +4217,7 @@ async function run(): Promise<CommanderCommand> {
   });
 
   // Plugin uninstall command
-  pluginCmd.command('uninstall <plugin>').alias('remove').alias('rm').description('Uninstall an installed plugin').option('-s, --scope <scope>', 'Uninstall from scope: user, project, or local', 'user').option('--keep-data', "Preserve the plugin's persistent data directory (~/.claude/plugins/data/{id}/)").addOption(coworkOption()).action(async (plugin: string, options: {
+  pluginCmd.command('uninstall <plugin>').alias('remove').alias('rm').description('Uninstall an installed plugin').option('-s, --scope <scope>', 'Uninstall from scope: user, project, or local', 'user').option('--keep-data', "Preserve the plugin's persistent data directory (~/.codepilot/plugins/data/{id}/)").addOption(coworkOption()).action(async (plugin: string, options: {
     scope?: string;
     cowork?: boolean;
     keepData?: boolean;
@@ -4315,7 +4315,7 @@ async function run(): Promise<CommanderCommand> {
   // The actual command is intercepted by the fast-path in cli.tsx before
   // Commander.js runs, so this registration exists only for help output.
   // Always hidden: isBridgeEnabled() at this point (before enableConfigs)
-  // would throw inside isClaudeAISubscriber → getGlobalConfig and return
+  // would throw inside isSubscriber → getGlobalConfig and return
   // false via the try/catch — but not before paying ~65ms of side effects
   // (25ms settings Zod parse + 40ms sync `security` keychain subprocess).
   // The dynamic visibility never worked; the command was always hidden.
@@ -4353,7 +4353,7 @@ async function run(): Promise<CommanderCommand> {
     await doctorHandler(root);
   });
 
-  // claude update
+  // codepilot update
   //
   // For SemVer-compliant versioning with build metadata (X.X.X+SHA):
   // - We perform exact string comparison (including SHA) to detect any change
@@ -4366,9 +4366,9 @@ async function run(): Promise<CommanderCommand> {
     await update();
   });
 
-  // claude up — run the project's CLAUDE.md "# claude up" setup instructions.
+  // codepilot up — run the project's codepilot.md "# codepilot up" setup instructions.
   if ("external" === 'ant') {
-    program.command('up').description('[ANT-ONLY] Initialize or upgrade the local dev environment using the "# claude up" section of the nearest CLAUDE.md').action(async () => {
+    program.command('up').description('[ANT-ONLY] Initialize or upgrade the local dev environment using the "# codepilot up" section of the nearest codepilot.md').action(async () => {
       const {
         up
       } = await import('src/cli/up.js');
@@ -4376,7 +4376,7 @@ async function run(): Promise<CommanderCommand> {
     });
   }
 
-  // claude rollback (ant-only)
+  // codepilot rollback (ant-only)
   // Rolls back to previous releases
   if ("external" === 'ant') {
     program.command('rollback [target]').description('[ANT-ONLY] Roll back to a previous release\n\nExamples:\n  codepilot rollback                                    Go 1 version back from current\n  codepilot rollback 3                                  Go 3 versions back from current\n  codepilot rollback 2.0.73-dev.20251217.t190658        Roll back to a specific version').option('-l, --list', 'List recent published versions with ages').option('--dry-run', 'Show what would be installed without installing').option('--safe', 'Roll back to the server-pinned safe version (set by oncall during incidents)').action(async (target?: string, options?: {
@@ -4391,7 +4391,7 @@ async function run(): Promise<CommanderCommand> {
     });
   }
 
-  // claude install
+  // codepilot install
   program.command('install [target]').description('Install CodePilot native build. Use [target] to specify version (stable, latest, or specific version)').option('--force', 'Force installation even if already installed').action(async (target: string | undefined, options: {
     force?: boolean;
   }) => {
@@ -4408,7 +4408,7 @@ async function run(): Promise<CommanderCommand> {
       if (maybeSessionId) return maybeSessionId;
       return Number(value);
     };
-    // claude log
+    // codepilot log
     program.command('log').description('[ANT-ONLY] Manage conversation logs.').argument('[number|sessionId]', 'A number (0, 1, 2, etc.) to display a specific log, or the sesssion ID (uuid) of a log', validateLogId).action(async (logId: string | number | undefined) => {
       const {
         logHandler
@@ -4416,7 +4416,7 @@ async function run(): Promise<CommanderCommand> {
       await logHandler(logId);
     });
 
-    // claude error
+    // codepilot error
     program.command('error').description('[ANT-ONLY] View error logs. Optionally provide a number (0, -1, -2, etc.) to display a specific log.').argument('[number]', 'A number (0, 1, 2, etc.) to display a specific log', parseInt).action(async (number: number | undefined) => {
       const {
         errorHandler
@@ -4424,7 +4424,7 @@ async function run(): Promise<CommanderCommand> {
       await errorHandler(number);
     });
 
-    // claude export
+    // codepilot export
     program.command('export').description('[ANT-ONLY] Export a conversation to a text file.').usage('<source> <outputFile>').argument('<source>', 'Session ID, log index (0, 1, 2...), or path to a .json/.jsonl log file').argument('<outputFile>', 'Output file path for the exported text').addHelpText('after', `
 Examples:
   $ codepilot export 0 conversation.txt                Export conversation at log index 0
@@ -4488,7 +4488,7 @@ Examples:
       });
     }
 
-    // claude completion <shell>
+    // codepilot completion <shell>
     program.command('completion <shell>', {
       hidden: true
     }).description('Generate shell completion script (bash, zsh, or fish)').option('--output <file>', 'Write completion script directly to a file instead of stdout').action(async (shell: string, opts: {

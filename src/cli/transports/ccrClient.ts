@@ -21,7 +21,7 @@ import type {
   SessionState,
 } from '../../utils/sessionState.js'
 import { sleep } from '../../utils/sleep.js'
-import { getClaudeCodeUserAgent } from '../../utils/userAgent.js'
+import { getCodePilotUserAgent } from '../../utils/userAgent.js'
 import {
   RetryableError,
   SerialBatchEventUploader,
@@ -571,8 +571,8 @@ export class CCRClient {
           headers: {
             ...authHeaders,
             'Content-Type': 'application/json',
-            'anthropic-version': '2023-06-01',
-            'User-Agent': getClaudeCodeUserAgent(),
+            'codepilot-version': '2023-06-01',
+            'User-Agent': getCodePilotUserAgent(),
           },
           validateStatus: alwaysValidStatus,
           timeout,
@@ -913,8 +913,8 @@ export class CCRClient {
         response = await this.http.get<T>(url, {
           headers: {
             ...authHeaders,
-            'anthropic-version': '2023-06-01',
-            'User-Agent': getClaudeCodeUserAgent(),
+            'codepilot-version': '2023-06-01',
+            'User-Agent': getCodePilotUserAgent(),
           },
           validateStatus: alwaysValidStatus,
           timeout: 30_000,

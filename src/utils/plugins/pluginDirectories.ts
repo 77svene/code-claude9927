@@ -14,7 +14,7 @@ import { readdir, rm, stat } from 'fs/promises'
 import { delimiter, join } from 'path'
 import { getUseCoworkPlugins } from '../../bootstrap/state.js'
 import { logForDebugging } from '../debug.js'
-import { getClaudeConfigHomeDir, isEnvTruthy } from '../envUtils.js'
+import { getCodePilotConfigHomeDir, isEnvTruthy } from '../envUtils.js'
 import { errorMessage, isFsInaccessible } from '../errors.js'
 import { formatFileSize } from '../format.js'
 import { expandTilde } from '../permissions/pathValidation.js'
@@ -48,18 +48,18 @@ function getPluginsDirectoryName(): string {
  *
  * Priority:
  * 1. CODEPILOT_PLUGIN_CACHE_DIR env var (explicit override)
- * 2. Default: ~/.claude/plugins or ~/.claude/cowork_plugins
+ * 2. Default: ~/.codepilot/plugins or ~/.codepilot/cowork_plugins
  */
 export function getPluginsDirectory(): string {
   // expandTilde: when CODEPILOT_PLUGIN_CACHE_DIR is set via settings.json
   // `env` (not shell), ~ is not expanded by the shell. Without this, a value
-  // like "~/.claude/plugins" becomes a literal `~` directory created in the
+  // like "~/.codepilot/plugins" becomes a literal `~` directory created in the
   // cwd of every project (gh-30794 / CC-212).
   const envOverride = process.env.CODEPILOT_PLUGIN_CACHE_DIR
   if (envOverride) {
     return expandTilde(envOverride)
   }
-  return join(getClaudeConfigHomeDir(), getPluginsDirectoryName())
+  return join(getCodePilotConfigHomeDir(), getPluginsDirectoryName())
 }
 
 /**
@@ -101,13 +101,13 @@ export function pluginDataDirPath(pluginId: string): string {
 
 /**
  * Persistent per-plugin data directory, exposed to plugins as
- * ${CLAUDE_PLUGIN_DATA}. Unlike the version-scoped install cache
- * (${CLAUDE_PLUGIN_ROOT}, which is orphaned and GC'd on every update),
+ * ${codepilot_PLUGIN_DATA}. Unlike the version-scoped install cache
+ * (${codepilot_PLUGIN_ROOT}, which is orphaned and GC'd on every update),
  * this survives plugin updates — only removed on last-scope uninstall.
  *
  * Creates the directory on call (mkdir). The *lazy* behavior is at the
  * substitutePluginVariables call site — the DATA pattern uses function-form
- * .replace() so this isn't invoked unless ${CLAUDE_PLUGIN_DATA} is present
+ * .replace() so this isn't invoked unless ${codepilot_PLUGIN_DATA} is present
  * (ROOT also uses function-form, but for $-pattern safety, not laziness).
  * Env-var export sites (MCP/LSP server env, hook env) call this eagerly
  * since subprocesses may expect the dir to exist before writing to it.

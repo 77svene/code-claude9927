@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle';
-import type { TextBlockParam } from '@anthropic-ai/sdk/resources/index.mjs';
+import type { TextBlockParam } from 'src/types/contentBlocks.js';
 import React, { useContext, useMemo } from 'react';
 import { getKairosActive, getUserMsgOptIn } from '../../bootstrap/state.js';
 import { Box } from '../../ink.js';
@@ -18,12 +18,12 @@ type Props = {
 };
 
 // Hard cap on displayed prompt text. Piping large files via stdin
-// (e.g. `cat 11k-line-file | claude`) creates a single user message whose
+// (e.g. `cat 11k-line-file | codepilot`) creates a single user message whose
 // <Text> node the fullscreen Ink renderer must wrap/output on every frame,
 // causing 500ms+ keystroke latency. React.memo skips the React render but
 // the Ink output pass still iterates the full mounted text. Non-fullscreen
 // avoids this via <Static> (print-and-forget to terminal scrollback).
-// Head+tail because `{ cat file; echo prompt; } | claude` puts the user's
+// Head+tail because `{ cat file; echo prompt; } | codepilot` puts the user's
 // actual question at the end.
 const MAX_DISPLAY_CHARS = 10_000;
 const TRUNCATE_HEAD_CHARS = 2_500;

@@ -4,13 +4,13 @@
  * Export names preserved for compatibility.
  */
 
-export const CLAUDE_AI_INFERENCE_SCOPE = 'user:inference' as const
-export const CLAUDE_AI_PROFILE_SCOPE = 'user:profile' as const
+export const codepilot_AI_INFERENCE_SCOPE = 'user:inference' as const
+export const codepilot_AI_PROFILE_SCOPE = 'user:profile' as const
 export const OAUTH_BETA_HEADER = 'oauth-2025-04-20' as const
 
 export const CONSOLE_OAUTH_SCOPES = [] as const
 
-export const CLAUDE_AI_OAUTH_SCOPES = [] as const
+export const codepilot_AI_OAUTH_SCOPES = [] as const
 
 export const ALL_OAUTH_SCOPES: string[] = []
 
@@ -19,13 +19,13 @@ export const MCP_CLIENT_METADATA_URL = ''
 type OauthConfig = {
   BASE_API_URL: string
   CONSOLE_AUTHORIZE_URL: string
-  CLAUDE_AI_AUTHORIZE_URL: string
-  CLAUDE_AI_ORIGIN: string
+  codepilot_AI_AUTHORIZE_URL: string
+  codepilot_AI_ORIGIN: string
   TOKEN_URL: string
   API_KEY_URL: string
   ROLES_URL: string
   CONSOLE_SUCCESS_URL: string
-  CLAUDEAI_SUCCESS_URL: string
+  codepilotAI_SUCCESS_URL: string
   MANUAL_REDIRECT_URL: string
   CLIENT_ID: string
   OAUTH_FILE_SUFFIX: string
@@ -36,13 +36,13 @@ type OauthConfig = {
 const STUB_OAUTH_CONFIG: OauthConfig = {
   BASE_API_URL: '',
   CONSOLE_AUTHORIZE_URL: '',
-  CLAUDE_AI_AUTHORIZE_URL: '',
-  CLAUDE_AI_ORIGIN: '',
+  codepilot_AI_AUTHORIZE_URL: '',
+  codepilot_AI_ORIGIN: '',
   TOKEN_URL: '',
   API_KEY_URL: '',
   ROLES_URL: '',
   CONSOLE_SUCCESS_URL: '',
-  CLAUDEAI_SUCCESS_URL: '',
+  codepilotAI_SUCCESS_URL: '',
   MANUAL_REDIRECT_URL: '',
   CLIENT_ID: '',
   OAUTH_FILE_SUFFIX: '',

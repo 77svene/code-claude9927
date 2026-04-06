@@ -3,12 +3,12 @@
 import { getAPIProvider } from '../utils/model/providers.js'
 
 const DEFAULT_PREFIX = `You are CodePilot, a local AI-powered coding assistant.`
-const AGENT_SDK_CLAUDE_CODE_PRESET_PREFIX = `You are CodePilot, a local AI-powered coding assistant, running within the Agent SDK.`
+const AGENT_SDK_codepilot_CODE_PRESET_PREFIX = `You are CodePilot, a local AI-powered coding assistant, running within the Agent SDK.`
 const AGENT_SDK_PREFIX = `You are a CodePilot agent.`
 
 const CLI_SYSPROMPT_PREFIX_VALUES = [
   DEFAULT_PREFIX,
-  AGENT_SDK_CLAUDE_CODE_PRESET_PREFIX,
+  AGENT_SDK_codepilot_CODE_PRESET_PREFIX,
   AGENT_SDK_PREFIX,
 ] as const
 
@@ -33,7 +33,7 @@ export function getCLISyspromptPrefix(options?: {
 
   if (options?.isNonInteractive) {
     if (options.hasAppendSystemPrompt) {
-      return AGENT_SDK_CLAUDE_CODE_PRESET_PREFIX
+      return AGENT_SDK_codepilot_CODE_PRESET_PREFIX
     }
     return AGENT_SDK_PREFIX
   }

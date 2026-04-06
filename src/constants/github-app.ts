@@ -16,12 +16,12 @@ on:
     types: [submitted]
 
 jobs:
-  claude:
+  codepilot:
     if: |
-      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
-      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
-      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
-      (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@codepilot')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@codepilot')) ||
+      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@codepilot')) ||
+      (github.event_name == 'issues' && (contains(github.event.issue.body, '@codepilot') || contains(github.event.issue.title, '@codepilot')))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -36,10 +36,10 @@ jobs:
           fetch-depth: 1
 
       - name: Run CodePilot
-        id: claude
-        uses: anthropics/claude-code-action@v1
+        id: codepilot
+        uses: codepilot/codepilot-action@v1
         with:
-          anthropic_api_key: \${{ secrets.ANTHROPIC_API_KEY }}
+          codepilot_api_key: \${{ secrets.CODEPILOT_API_KEY }}
 
           # This is an optional setting that allows CodePilot to read CI results on PRs
           additional_permissions: |
@@ -48,10 +48,10 @@ jobs:
           # Optional: Give a custom prompt to CodePilot. If this is not specified, CodePilot will perform the instructions specified in the comment that tagged it.
           # prompt: 'Update the pull request description to include a summary of changes.'
 
-          # Optional: Add claude_args to customize behavior and configuration
-          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
+          # Optional: Add codepilot_args to customize behavior and configuration
+          # See https://github.com/codepilot/codepilot-action/blob/main/docs/usage.md
           # or  for available options
-          # claude_args: '--allowed-tools Bash(gh pr:*)'
+          # codepilot_args: '--allowed-tools Bash(gh pr:*)'
 
 `
 
@@ -71,13 +71,13 @@ CodePilot is an AI coding agent that can help with:
 
 ### How it works
 
-Once this PR is merged, we'll be able to interact with CodePilot by mentioning @claude in a pull request or issue comment.
+Once this PR is merged, we'll be able to interact with CodePilot by mentioning @codepilot in a pull request or issue comment.
 Once the workflow is triggered, CodePilot will analyze the comment and surrounding context, and execute on the request in a GitHub action.
 
 ### Important Notes
 
 - **This workflow won't take effect until this PR is merged**
-- **@claude mentions won't work until after the merge is complete**
+- **@codepilot mentions won't work until after the merge is complete**
 - The workflow runs automatically whenever CodePilot is mentioned in PR or issue comments
 - CodePilot gets access to the entire PR or issue context including files, diffs, and previous comments
 
@@ -93,9 +93,9 @@ Once the workflow is triggered, CodePilot will analyze the comment and surroundi
 allowed_tools: Bash(npm install),Bash(npm run build),Bash(npm run lint),Bash(npm run test)
 \`\`\`
 
-There's more information in the [CodePilot action repo](https://github.com/anthropics/claude-code-action).
+There's more information in the [CodePilot action repo](https://github.com/codepilot/codepilot-action).
 
-After merging this PR, let's try mentioning @claude in a comment on any PR to get started!`
+After merging this PR, let's try mentioning @codepilot in a comment on any PR to get started!`
 
 export const CODE_REVIEW_PLUGIN_WORKFLOW_CONTENT = `name: CodePilot Code Review
 
@@ -110,7 +110,7 @@ on:
     #   - "src/**/*.jsx"
 
 jobs:
-  claude-review:
+  codepilot-review:
     # Optional: Filter by PR author
     # if: |
     #   github.event.pull_request.user.login == 'external-contributor' ||
@@ -131,14 +131,14 @@ jobs:
           fetch-depth: 1
 
       - name: Run CodePilot Code Review
-        id: claude-review
-        uses: anthropics/claude-code-action@v1
+        id: codepilot-review
+        uses: codepilot/codepilot-action@v1
         with:
-          anthropic_api_key: \${{ secrets.ANTHROPIC_API_KEY }}
-          plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
-          plugins: 'code-review@claude-code-plugins'
+          codepilot_api_key: \${{ secrets.CODEPILOT_API_KEY }}
+          plugin_marketplaces: 'https://github.com/codepilot/codepilot.git'
+          plugins: 'code-review@codepilot-code-plugins'
           prompt: '/code-review:code-review \${{ github.repository }}/pull/\${{ github.event.pull_request.number }}'
-          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
+          # See https://github.com/codepilot/codepilot-action/blob/main/docs/usage.md
           # or  for available options
 
 `

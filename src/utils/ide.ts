@@ -15,7 +15,7 @@ import type {
 } from '../services/mcp/types.js'
 import { getGlobalConfig, saveGlobalConfig } from './config.js'
 import { env } from './env.js'
-import { getClaudeConfigHomeDir, isEnvTruthy } from './envUtils.js'
+import { getCodePilotConfigHomeDir, isEnvTruthy } from './envUtils.js'
 import {
   execFileNoThrow,
   execFileNoThrowWithCwd,
@@ -292,7 +292,7 @@ export function getTerminalIdeType(): IdeType | null {
 }
 
 /**
- * Gets sorted IDE lockfiles from ~/.claude/ide directory
+ * Gets sorted IDE lockfiles from ~/.codepilot/ide directory
  * @returns Array of full lockfile paths sorted by modification time (newest first)
  */
 export async function getSortedIdeLockfiles(): Promise<string[]> {
@@ -460,7 +460,7 @@ const getWindowsUserProfile = memoize(async (): Promise<string | undefined> => {
  * stat loop compounded startup latency.
  */
 export async function getIdeLockfilesPaths(): Promise<string[]> {
-  const paths: string[] = [join(getClaudeConfigHomeDir(), 'ide')]
+  const paths: string[] = [join(getCodePilotConfigHomeDir(), 'ide')]
 
   if (getPlatform() !== 'wsl') {
     return paths
@@ -474,7 +474,7 @@ export async function getIdeLockfilesPaths(): Promise<string[]> {
   if (windowsHome) {
     const converter = new WindowsToWSLConverter(process.env.WSL_DISTRO_NAME)
     const wslPath = converter.toLocalPath(windowsHome)
-    paths.push(resolve(wslPath, '.claude', 'ide'))
+    paths.push(resolve(wslPath, '.codepilot', 'ide'))
   }
 
   // Construct the path based on the standard Windows WSL locations
@@ -499,7 +499,7 @@ export async function getIdeLockfilesPaths(): Promise<string[]> {
       ) {
         continue // Skip system directories
       }
-      paths.push(join(usersDir, user.name, '.claude', 'ide'))
+      paths.push(join(usersDir, user.name, '.codepilot', 'ide'))
     }
   } catch (error: unknown) {
     if (isFsInaccessible(error)) {
@@ -846,8 +846,8 @@ export function hasAccessToIDEExtensionDiffFeature(
 
 const EXTENSION_ID =
   process.env.USER_TYPE === 'ant'
-    ? 'anthropic.claude-code-internal'
-    : 'anthropic.claude-code'
+    ? 'codepilot.codepilot-code-internal'
+    : 'codepilot.codepilot-code'
 
 export async function isIDEExtensionInstalled(
   ideType: IdeType,
@@ -886,12 +886,12 @@ async function installIDEExtension(ideType: IdeType): Promise<string | null> {
       }
       let version = await getInstalledVSCodeExtensionVersion(command)
       // If it's not installed or the version is older than the one we have bundled,
-      if (!version || lt(version, getClaudeCodeVersion())) {
+      if (!version || lt(version, getCodePilotCodeVersion())) {
         // `code` may crash when invoked too quickly in succession
         await sleep(500)
         const result = await execFileNoThrowWithCwd(
           command,
-          ['--force', '--install-extension', 'anthropic.claude-code'],
+          ['--force', '--install-extension', 'codepilot.codepilot-code'],
           {
             env: getInstallationEnv(),
           },
@@ -899,7 +899,7 @@ async function installIDEExtension(ideType: IdeType): Promise<string | null> {
         if (result.code !== 0) {
           throw new Error(`${result.code}: ${result.error} ${result.stderr}`)
         }
-        version = getClaudeCodeVersion()
+        version = getCodePilotCodeVersion()
       }
       return version
     }
@@ -924,7 +924,7 @@ function getInstallationEnv(): NodeJS.ProcessEnv | undefined {
   return undefined
 }
 
-function getClaudeCodeVersion() {
+function getCodePilotCodeVersion() {
   return MACRO.VERSION
 }
 
@@ -941,7 +941,7 @@ async function getInstalledVSCodeExtensionVersion(
   const lines = stdout?.split('\n') || []
   for (const line of lines) {
     const [extensionId, version] = line.split('@')
-    if (extensionId === 'anthropic.claude-code' && version) {
+    if (extensionId === 'codepilot.codepilot-code' && version) {
       return version
     }
   }
@@ -1033,7 +1033,7 @@ async function getVSCodeIDECommand(ideType: IdeType): Promise<string | null> {
   // then resolves to Code.exe via PATHEXT which opens a new editor window
   // instead of running the CLI. Asking for 'code.cmd' forces cross-spawn/which
   // to skip Code.exe. See microsoft/vscode#299416 (fixed in Insiders) and
-  // anthropics/claude-code#30975.
+  // codepilot/codepilot#30975.
   const ext = getPlatform() === 'windows' ? '.cmd' : ''
   switch (ideType) {
     case 'vscode':
@@ -1421,7 +1421,7 @@ async function installFromArtifactory(command: string): Promise<string> {
 
   // Fetch the version from artifactory
   const versionUrl =
-    'https://artifactory.infra.ant.dev/artifactory/armorcode-claude-code-internal/claude-vscode-releases/stable'
+    'https://artifactory.infra.ant.dev/artifactory/armorcode-codepilot-code-internal/codepilot-vscode-releases/stable'
 
   try {
     const versionResponse = await axios.get(versionUrl, {
@@ -1436,10 +1436,10 @@ async function installFromArtifactory(command: string): Promise<string> {
     }
 
     // Download the .vsix file from artifactory
-    const vsixUrl = `https://artifactory.infra.ant.dev/artifactory/armorcode-claude-code-internal/claude-vscode-releases/${version}/claude-code.vsix`
+    const vsixUrl = `https://artifactory.infra.ant.dev/artifactory/armorcode-codepilot-code-internal/codepilot-vscode-releases/${version}/codepilot-code.vsix`
     const tempVsixPath = join(
       os.tmpdir(),
-      `claude-code-${version}-${Date.now()}.vsix`,
+      `codepilot-code-${version}-${Date.now()}.vsix`,
     )
 
     try {

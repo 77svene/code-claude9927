@@ -2,11 +2,11 @@ import {
   APIConnectionError,
   APIConnectionTimeoutError,
   APIError,
-} from '@anthropic-ai/sdk'
+} from 'src/types/contentBlocks.js'
 import type {
   BetaMessage,
   BetaStopReason,
-} from '@anthropic-ai/sdk/resources/beta/messages/messages.mjs'
+} from 'src/types/contentBlocks.js'
 import { AFK_MODE_BETA_HEADER } from 'src/constants/betas.js'
 import type { SDKAssistantMessageError } from 'src/entrypoints/agentSdkTypes.js'
 import type {
@@ -15,10 +15,10 @@ import type {
   UserMessage,
 } from 'src/types/message.js'
 import {
-  getAnthropicApiKeyWithSource,
-  getClaudeAIOAuthTokens,
+  getcodepilotApiKeyWithSource,
+  getOAuthTokens,
   getOauthAccountInfo,
-  isClaudeAISubscriber,
+  isSubscriber,
 } from 'src/utils/auth.js'
 import {
   createAssistantAPIErrorMessage,
@@ -44,10 +44,10 @@ import {
   logEvent,
 } from '../analytics/index.js'
 import {
-  type ClaudeAILimits,
+  type ApiLimits,
   getRateLimitErrorMessage,
   type OverageDisabledReason,
-} from '../claudeAiLimits.js'
+} from '../apiLimits.js'
 import { shouldProcessRateLimits } from '../rateLimitMocking.js' // Used for /mock-limits command
 import { extractConnectionErrorDetails, formatAPIError } from './errorUtils.js'
 
@@ -156,9 +156,9 @@ export const INVALID_API_KEY_ERROR_MESSAGE = 'Not logged in · Please run /login
 export const INVALID_API_KEY_ERROR_MESSAGE_EXTERNAL =
   'Invalid API key · Fix external API key'
 export const ORG_DISABLED_ERROR_MESSAGE_ENV_KEY_WITH_OAUTH =
-  'Your ANTHROPIC_API_KEY belongs to a disabled organization · Unset the environment variable to use your subscription instead'
+  'Your CODEPILOT_API_KEY belongs to a disabled organization · Unset the environment variable to use your subscription instead'
 export const ORG_DISABLED_ERROR_MESSAGE_ENV_KEY =
-  'Your ANTHROPIC_API_KEY belongs to a disabled organization · Update or unset the environment variable'
+  'Your CODEPILOT_API_KEY belongs to a disabled organization · Update or unset the environment variable'
 export const TOKEN_REVOKED_ERROR_MESSAGE =
   'OAuth token revoked · Please run /login'
 export const CCR_AUTH_ERROR_MESSAGE =
@@ -465,21 +465,21 @@ export function getAssistantMessageFromError(
   if (
     error instanceof APIError &&
     error.status === 429 &&
-    shouldProcessRateLimits(isClaudeAISubscriber())
+    shouldProcessRateLimits(isSubscriber())
   ) {
     // Check if this is the new API with multiple rate limit headers
     const rateLimitType = error.headers?.get?.(
-      'anthropic-ratelimit-unified-representative-claim',
+      'codepilot-ratelimit-unified-representative-claim',
     ) as 'five_hour' | 'seven_day' | 'seven_day_opus' | null
 
     const overageStatus = error.headers?.get?.(
-      'anthropic-ratelimit-unified-overage-status',
+      'codepilot-ratelimit-unified-overage-status',
     ) as 'allowed' | 'allowed_warning' | 'rejected' | null
 
     // If we have the new headers, use the new message generation
     if (rateLimitType || overageStatus) {
       // Build limits object from error headers to determine the appropriate message
-      const limits: ClaudeAILimits = {
+      const limits: ApiLimits = {
         status: 'rejected',
         unifiedRateLimitFallbackAvailable: false,
         isUsingOverage: false,
@@ -487,7 +487,7 @@ export function getAssistantMessageFromError(
 
       // Extract rate limit information from headers
       const resetHeader = error.headers?.get?.(
-        'anthropic-ratelimit-unified-reset',
+        'codepilot-ratelimit-unified-reset',
       )
       if (resetHeader) {
         limits.resetsAt = Number(resetHeader)
@@ -502,14 +502,14 @@ export function getAssistantMessageFromError(
       }
 
       const overageResetHeader = error.headers?.get?.(
-        'anthropic-ratelimit-unified-overage-reset',
+        'codepilot-ratelimit-unified-overage-reset',
       )
       if (overageResetHeader) {
         limits.overageResetsAt = Number(overageResetHeader)
       }
 
       const overageDisabledReason = error.headers?.get?.(
-        'anthropic-ratelimit-unified-overage-disabled-reason',
+        'codepilot-ratelimit-unified-overage-disabled-reason',
       ) as OverageDisabledReason | null
       if (overageDisabledReason) {
         limits.overageDisabledReason = overageDisabledReason
@@ -527,7 +527,7 @@ export function getAssistantMessageFromError(
       // If getRateLimitErrorMessage returned null, it means the fallback mechanism
       // will handle this silently (e.g., Opus -> Sonnet fallback for eligible users).
       // Return NO_RESPONSE_REQUESTED so no error is shown to the user, but the
-      // message is still recorded in conversation history for Claude to see.
+      // message is still recorded in conversation history for CodePilot to see.
       return createAssistantAPIErrorMessage({
         content: NO_RESPONSE_REQUESTED,
         error: 'rate_limit',
@@ -539,7 +539,7 @@ export function getAssistantMessageFromError(
     // (e.g. 1M context without Extra Usage) and infra capacity 429s land here.
     if (error.message.includes('Extra usage is required for long context')) {
       const hint = getIsNonInteractiveSession()
-        ? 'enable extra usage at claude.ai/settings/usage, or use --model to switch to standard context'
+        ? 'enable extra usage at codepilot.local/settings/usage, or use --model to switch to standard context'
         : 'run /extra-usage to enable, or /model to switch to standard context'
       return createAssistantAPIErrorMessage({
         content: `${API_ERROR_MESSAGE_PREFIX}: Extra usage is required for 1M context · ${hint}`,
@@ -646,7 +646,7 @@ export function getAssistantMessageFromError(
     error instanceof APIError &&
     error.status === 400 &&
     error.message.includes(AFK_MODE_BETA_HEADER) &&
-    error.message.includes('anthropic-beta')
+    error.message.includes('codepilot-beta')
   ) {
     return createAssistantAPIErrorMessage({
       content: 'Auto mode is unavailable for your plan',
@@ -734,7 +734,7 @@ export function getAssistantMessageFromError(
 
   // Check for invalid model name error for subscription users trying to use Opus
   if (
-    isClaudeAISubscriber() &&
+    isSubscriber() &&
     error instanceof APIError &&
     error.status === 400 &&
     error.message.toLowerCase().includes('invalid model name') &&
@@ -752,13 +752,13 @@ export function getAssistantMessageFromError(
   // Ants using new or unknown org IDs that haven't been gated in.
   if (
     process.env.USER_TYPE === 'ant' &&
-    !process.env.ANTHROPIC_MODEL &&
+    !process.env.CODEPILOT_MODEL &&
     error instanceof Error &&
     error.message.toLowerCase().includes('invalid model name')
   ) {
     // Get organization ID from config - only use OAuth account data when actively using OAuth
     const orgId = getOauthAccountInfo()?.organizationUuid
-    const baseMsg = `[ANT-ONLY] Your org isn't gated into the \`${model}\` model. Either run \`claude\` with \`ANTHROPIC_MODEL=${getDefaultMainLoopModelSetting()}\``
+    const baseMsg = `[ANT-ONLY] Your org isn't gated into the \`${model}\` model. Either run \`codepilot\` with \`CODEPILOT_MODEL=${getDefaultMainLoopModelSetting()}\``
     const msg = orgId
       ? `${baseMsg} or share your orgId (${orgId}) in ${MACRO.FEEDBACK_CHANNEL} for help getting access.`
       : `${baseMsg} or reach out in ${MACRO.FEEDBACK_CHANNEL} for help getting access.`
@@ -778,7 +778,7 @@ export function getAssistantMessageFromError(
       error: 'billing_error',
     })
   }
-  // "Organization has been disabled" — commonly a stale ANTHROPIC_API_KEY
+  // "Organization has been disabled" — commonly a stale CODEPILOT_API_KEY
   // from a previous employer/project overriding subscription auth. Only handle
   // the env-var case; apiKeyHelper and /login-managed keys mean the active
   // auth's org is genuinely disabled with no dormant fallback to point at.
@@ -787,17 +787,17 @@ export function getAssistantMessageFromError(
     error.status === 400 &&
     error.message.toLowerCase().includes('organization has been disabled')
   ) {
-    const { source } = getAnthropicApiKeyWithSource()
-    // getAnthropicApiKeyWithSource conflates the env var with FD-passed keys
+    const { source } = getcodepilotApiKeyWithSource()
+    // getcodepilotApiKeyWithSource conflates the env var with FD-passed keys
     // under the same source value, and in CCR mode OAuth stays active despite
     // the env var. The three guards ensure we only blame the env var when it's
     // actually set and actually on the wire.
     if (
-      source === 'ANTHROPIC_API_KEY' &&
-      process.env.ANTHROPIC_API_KEY &&
-      !isClaudeAISubscriber()
+      source === 'CODEPILOT_API_KEY' &&
+      process.env.CODEPILOT_API_KEY &&
+      !isSubscriber()
     ) {
-      const hasStoredOAuth = getClaudeAIOAuthTokens()?.accessToken != null
+      const hasStoredOAuth = getOAuthTokens()?.accessToken != null
       // Not 'authentication_failed' — that triggers VS Code's showLogin(), but
       // login can't fix this (approved env var keeps overriding OAuth). The fix
       // is configuration-based (unset the var), so invalid_request is correct.
@@ -823,9 +823,9 @@ export function getAssistantMessageFromError(
     }
 
     // Check if the API key is from an external source
-    const { source } = getAnthropicApiKeyWithSource()
+    const { source } = getcodepilotApiKeyWithSource()
     const isExternalSource =
-      source === 'ANTHROPIC_API_KEY' || source === 'apiKeyHelper'
+      source === 'CODEPILOT_API_KEY' || source === 'apiKeyHelper'
 
     return createAssistantAPIErrorMessage({
       error: 'authentication_failed',
@@ -1192,12 +1192,12 @@ export function getErrorMessageIfRefusal(
   logEvent('tengu_refusal_api_response', {})
 
   const baseMessage = getIsNonInteractiveSession()
-    ? `${API_ERROR_MESSAGE_PREFIX}: CodePilot is unable to respond to this request, which appears to violate our Usage Policy (https://www.anthropic.com/legal/aup). Try rephrasing the request or attempting a different approach.`
-    : `${API_ERROR_MESSAGE_PREFIX}: CodePilot is unable to respond to this request, which appears to violate our Usage Policy (https://www.anthropic.com/legal/aup). Please double press esc to edit your last message or start a new session for CodePilot to assist with a different task.`
+    ? `${API_ERROR_MESSAGE_PREFIX}: CodePilot is unable to respond to this request, which appears to violate our Usage Policy (https://www.codepilot.local/legal/aup). Try rephrasing the request or attempting a different approach.`
+    : `${API_ERROR_MESSAGE_PREFIX}: CodePilot is unable to respond to this request, which appears to violate our Usage Policy (https://www.codepilot.local/legal/aup). Please double press esc to edit your last message or start a new session for CodePilot to assist with a different task.`
 
   const modelSuggestion =
-    model !== 'claude-sonnet-4-20250514'
-      ? ' If you are seeing this refusal repeatedly, try running /model claude-sonnet-4-20250514 to switch models.'
+    model !== 'codepilot-sonnet-4-20250514'
+      ? ' If you are seeing this refusal repeatedly, try running /model codepilot-sonnet-4-20250514 to switch models.'
       : ''
 
   return createAssistantAPIErrorMessage({

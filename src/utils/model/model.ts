@@ -112,7 +112,7 @@ export function isLegacyModelRemapEnabled(): boolean {
   return false
 }
 
-export function getClaudeAiUserDefaultModelDescription(
+export function getCodePilotUserDefaultModelDescription(
   _fastMode = false,
 ): string {
   return getMainLoopModel()

@@ -3,14 +3,14 @@ import figures from 'figures';
 import * as React from 'react';
 import { color, Text } from '../ink.js';
 import type { MCPServerConnection } from '../services/mcp/types.js';
-import { getAccountInformation, isClaudeAISubscriber } from './auth.js';
-import { getLargeMemoryFiles, getMemoryFiles, MAX_MEMORY_CHARACTER_COUNT } from './claudemd.js';
+import { getAccountInformation, isSubscriber } from './auth.js';
+import { getLargeMemoryFiles, getMemoryFiles, MAX_MEMORY_CHARACTER_COUNT } from './configmd.js';
 import { getDoctorDiagnostic } from './doctorDiagnostic.js';
 import { getAWSRegion, getDefaultVertexRegion, isEnvTruthy } from './envUtils.js';
 import { getDisplayPath } from './file.js';
 import { formatNumber } from './format.js';
 import { getIdeClientName, type IDEExtensionInstallationStatus, isJetBrainsIde, toIDEDisplayName } from './ide.js';
-import { getClaudeAiUserDefaultModelDescription, modelDisplayString } from './model/model.js';
+import { getCodePilotUserDefaultModelDescription, modelDisplayString } from './model/model.js';
 import { getAPIProvider } from './model/providers.js';
 import { getMTLSConfig } from './mtls.js';
 import { checkInstall } from './nativeInstaller/index.js';
@@ -252,11 +252,11 @@ export function buildAPIProviderProperties(): Property[] {
     });
   }
   if (apiProvider === 'firstParty') {
-    const anthropicBaseUrl = process.env.ANTHROPIC_BASE_URL;
-    if (anthropicBaseUrl) {
+    const codepilotBaseUrl = process.env.CODEPILOT_BASE_URL;
+    if (codepilotBaseUrl) {
       properties.push({
         label: 'CodePilot base URL',
-        value: anthropicBaseUrl
+        value: codepilotBaseUrl
       });
     }
   } else if (apiProvider === 'bedrock') {
@@ -284,7 +284,7 @@ export function buildAPIProviderProperties(): Property[] {
         value: vertexBaseUrl
       });
     }
-    const gcpProject = process.env.ANTHROPIC_VERTEX_PROJECT_ID;
+    const gcpProject = process.env.CODEPILOT_VERTEX_PROJECT_ID;
     if (gcpProject) {
       properties.push({
         label: 'GCP project',
@@ -301,14 +301,14 @@ export function buildAPIProviderProperties(): Property[] {
       });
     }
   } else if (apiProvider === 'foundry') {
-    const foundryBaseUrl = process.env.ANTHROPIC_FOUNDRY_BASE_URL;
+    const foundryBaseUrl = process.env.CODEPILOT_FOUNDRY_BASE_URL;
     if (foundryBaseUrl) {
       properties.push({
         label: 'Microsoft Foundry base URL',
         value: foundryBaseUrl
       });
     }
-    const foundryResource = process.env.ANTHROPIC_FOUNDRY_RESOURCE;
+    const foundryResource = process.env.CODEPILOT_FOUNDRY_RESOURCE;
     if (foundryResource) {
       properties.push({
         label: 'Microsoft Foundry resource',
@@ -353,8 +353,8 @@ export function buildAPIProviderProperties(): Property[] {
 }
 export function getModelDisplayLabel(mainLoopModel: string | null): string {
   let modelLabel = modelDisplayString(mainLoopModel);
-  if (mainLoopModel === null && isClaudeAISubscriber()) {
-    const description = getClaudeAiUserDefaultModelDescription();
+  if (mainLoopModel === null && isSubscriber()) {
+    const description = getCodePilotUserDefaultModelDescription();
     modelLabel = `${chalk.bold('Default')} ${description}`;
   }
   return modelLabel;

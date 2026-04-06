@@ -5,7 +5,7 @@ import { setupTerminal, shouldOfferTerminalSetup } from '../commands/terminalSet
 import { useExitOnCtrlCDWithKeybindings } from '../hooks/useExitOnCtrlCDWithKeybindings.js';
 import { Box, Link, Newline, Text, useTheme } from '../ink.js';
 import { useKeybindings } from '../keybindings/useKeybinding.js';
-import { isAnthropicAuthEnabled } from '../utils/auth.js';
+import { iscodepilotAuthEnabled } from '../utils/auth.js';
 import { normalizeApiKeyForConfig } from '../utils/authPortable.js';
 import { getCustomApiKeyStatus } from '../utils/config.js';
 import { env } from '../utils/env.js';
@@ -32,7 +32,7 @@ export function Onboarding({
 }: Props): React.ReactNode {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [skipOAuth, setSkipOAuth] = useState(false);
-  const [oauthEnabled] = useState(() => isAnthropicAuthEnabled());
+  const [oauthEnabled] = useState(() => iscodepilotAuthEnabled());
   const [theme, setTheme] = useTheme();
   useEffect(() => {
     logEvent('tengu_began_setup', {
@@ -71,9 +71,9 @@ export function Onboarding({
          */}
         <OrderedList>
           <OrderedList.Item>
-            <Text>Claude can make mistakes</Text>
+            <Text>CodePilot can make mistakes</Text>
             <Text dimColor wrap="wrap">
-              You should always review Claude&apos;s responses, especially when
+              You should always review CodePilot&apos;s responses, especially when
               <Newline />
               running code.
               <Newline />
@@ -86,7 +86,7 @@ export function Onboarding({
             <Text dimColor wrap="wrap">
               For more details see:
               <Newline />
-              <Link url="https://code.claude.com/docs/en/security" />
+              <Link url="https://code.codepilot.local/docs/en/security" />
             </Text>
           </OrderedList.Item>
         </OrderedList>
@@ -97,12 +97,12 @@ export function Onboarding({
   // Create the steps array - determine which steps to include based on reAuth and oauthEnabled
   const apiKeyNeedingApproval = useMemo(() => {
     // Add API key step if needed
-    // On homespace, ANTHROPIC_API_KEY is preserved in process.env for child
+    // On homespace, CODEPILOT_API_KEY is preserved in process.env for child
     // processes but ignored by CodePilot itself (see auth.ts).
-    if (!process.env.ANTHROPIC_API_KEY || isRunningOnHomespace()) {
+    if (!process.env.CODEPILOT_API_KEY || isRunningOnHomespace()) {
       return '';
     }
-    const customApiKeyTruncated = normalizeApiKeyForConfig(process.env.ANTHROPIC_API_KEY);
+    const customApiKeyTruncated = normalizeApiKeyForConfig(process.env.CODEPILOT_API_KEY);
     if (getCustomApiKeyStatus(customApiKeyTruncated) === 'new') {
       return customApiKeyTruncated;
     }

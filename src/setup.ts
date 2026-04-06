@@ -24,7 +24,7 @@ import { asSessionId } from './types/ids.js'
 import { isAgentSwarmsEnabled } from './utils/agentSwarmsEnabled.js'
 import { checkAndRestoreTerminalBackup } from './utils/appleTerminalBackup.js'
 import { prefetchApiKeyFromApiKeyHelperIfSafe } from './utils/auth.js'
-import { clearMemoryFileCaches } from './utils/claudemd.js'
+import { clearMemoryFileCaches } from './utils/configmd.js'
 import { getCurrentProjectConfig, getGlobalConfig } from './utils/config.js'
 import { logForDiagnosticsNoPII } from './utils/diagLogs.js'
 import { env } from './utils/env.js'
@@ -280,7 +280,7 @@ export async function setup(
     clearMemoryFileCaches()
     // Settings cache was populated in init() (via applySafeConfigEnvironmentVariables)
     // and again at captureHooksConfigSnapshot() above, both from the original dir's
-    // .claude/settings.json. Re-read from the worktree and re-capture hooks.
+    // .codepilot/settings.json. Re-read from the worktree and re-capture hooks.
     updateHooksConfigSnapshot()
   }
 
@@ -416,12 +416,12 @@ export async function setup(
     if (
       process.env.USER_TYPE === 'ant' &&
       // Skip for Desktop's local agent mode — same trust model as CCR/BYOC
-      // (trusted Anthropic-managed launcher intentionally pre-approving everything).
+      // (trusted CodePilot-managed launcher intentionally pre-approving everything).
       // Precedent: permissionSetup.ts:861, applySettingsChange.ts:55 (PR #19116)
       process.env.CODEPILOT_ENTRYPOINT !== 'local-agent' &&
       // Same for CCD (CodePilot in Desktop) — apps#29127 passes the flag
       // unconditionally to unlock mid-session bypass switching
-      process.env.CODEPILOT_ENTRYPOINT !== 'claude-desktop'
+      process.env.CODEPILOT_ENTRYPOINT !== 'codepilot-desktop'
     ) {
       // Only await if permission mode is set to bypass
       const [isDocker, hasInternet] = await Promise.all([

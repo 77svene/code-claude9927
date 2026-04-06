@@ -100,11 +100,11 @@ const TEAMMATE_ENV_VARS = [
   'CODEPILOT_USE_VERTEX',
   'CODEPILOT_USE_FOUNDRY',
   // Custom API endpoint
-  'ANTHROPIC_BASE_URL',
+  'CODEPILOT_BASE_URL',
   // Config directory override
-  'CLAUDE_CONFIG_DIR',
+  'codepilot_CONFIG_DIR',
   // CCR marker — teammates need this for CCR-aware code paths. Auth finds
-  // its own way via /home/claude/.claude/remote/.oauth_token regardless;
+  // its own way via /home/codepilot/.codepilot/remote/.oauth_token regardless;
   // the FD env var wouldn't help (pipe FDs don't cross tmux).
   'CODEPILOT_REMOTE',
   // Auto-memory gate (memdir/paths.ts) checks REMOTE && !MEMORY_DIR to
@@ -129,11 +129,11 @@ const TEAMMATE_ENV_VARS = [
 
 /**
  * Builds the `env KEY=VALUE ...` string for teammate spawn commands.
- * Always includes CLAUDECODE=1 and CODEPILOT_EXPERIMENTAL_AGENT_TEAMS=1,
+ * Always includes codepilotCODE=1 and CODEPILOT_EXPERIMENTAL_AGENT_TEAMS=1,
  * plus any provider/config env vars that are set in the current process.
  */
 export function buildInheritedEnvVars(): string {
-  const envVars = ['CLAUDECODE=1', 'CODEPILOT_EXPERIMENTAL_AGENT_TEAMS=1']
+  const envVars = ['codepilotCODE=1', 'CODEPILOT_EXPERIMENTAL_AGENT_TEAMS=1']
 
   for (const key of TEAMMATE_ENV_VARS) {
     const value = process.env[key]

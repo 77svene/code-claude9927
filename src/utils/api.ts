@@ -162,17 +162,17 @@ export async function toolToAPISchema(
 
 /**
  * Log stats about first block for analyzing prefix matching config.
- * No-op: Anthropic prompt caching analytics removed.
+ * No-op: CodePilot prompt caching analytics removed.
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function logAPIPrefix(_systemPrompt: SystemPrompt): void {
-  // Stub: was used for Anthropic prompt caching prefix analytics
+  // Stub: was used for CodePilot prompt caching prefix analytics
 }
 
 /**
  * Split system prompt into blocks for API consumption.
  * Simplified: returns the full prompt as a single block with no cache scope.
- * (Anthropic-specific prompt caching logic has been removed.)
+ * (CodePilot-specific prompt caching logic has been removed.)
  */
 export function splitSysPromptPrefix(
   systemPrompt: SystemPrompt,
@@ -242,10 +242,10 @@ export async function logContextMetrics(
     ])
   // Extract individual context sizes and calculate total
   const gitStatusSize = systemContext.gitStatus?.length ?? 0
-  const claudeMdSize = userContext.claudeMd?.length ?? 0
+  const configMdSize = userContext.configMd?.length ?? 0
 
   // Calculate total context size
-  const totalContextSize = gitStatusSize + claudeMdSize
+  const totalContextSize = gitStatusSize + configMdSize
 
   // Get file count using ripgrep (rounded to nearest power of 10 for privacy)
   const currentDir = getCwd()
@@ -300,7 +300,7 @@ export async function logContextMetrics(
 
   logEvent('tengu_context_size', {
     git_status_size: gitStatusSize,
-    claude_md_size: claudeMdSize,
+    codepilot_md_size: configMdSize,
     total_context_size: totalContextSize,
     project_file_count_rounded: fileCount,
     mcp_tools_count: mcpToolsCount,
@@ -343,12 +343,12 @@ export function normalizeToolInput<T extends Tool>(
       // Replace \\; with \; (commonly needed for find -exec commands)
       normalizedCommand = normalizedCommand.replace(/\\\\;/g, '\\;')
 
-      // Logging for commands that are only echoing a string. This is to help us understand how often  Claude talks via bash
+      // Logging for commands that are only echoing a string. This is to help us understand how often  CodePilot talks via bash
       if (/^echo\s+["']?[^|&;><]*["']?$/i.test(normalizedCommand.trim())) {
         logEvent('tengu_bash_tool_simple_echo', {})
       }
 
-      // Check for run_in_background (may not exist in schema if CLAUDE_CODE_DISABLE_BACKGROUND_TASKS is set)
+      // Check for run_in_background (may not exist in schema if codepilot_CODE_DISABLE_BACKGROUND_TASKS is set)
       const run_in_background =
         'run_in_background' in parsed ? parsed.run_in_background : undefined
 
@@ -372,7 +372,7 @@ export function normalizeToolInput<T extends Tool>(
       // Validated upstream, won't throw
       const parsedInput = FileEditTool.inputSchema.parse(input)
 
-      // This is a workaround for tokens claude can't see
+      // This is a workaround for tokens codepilot can't see
       const { file_path, edits } = normalizeFileEditInput({
         file_path: parsedInput.file_path,
         edits: [

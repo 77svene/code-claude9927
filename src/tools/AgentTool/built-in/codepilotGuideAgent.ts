@@ -16,11 +16,11 @@ import type {
 
 const CODEPILOT_DOCS_MAP_URL =
   ''
-const CDP_DOCS_MAP_URL = 'https://platform.claude.com/llms.txt'
+const CDP_DOCS_MAP_URL = 'https://platform.codepilot.local/llms.txt'
 
-export const CODEPILOT_GUIDE_AGENT_TYPE = 'claude-code-guide'
+export const CODEPILOT_GUIDE_AGENT_TYPE = 'codepilot-code-guide'
 
-function getClaudeCodeGuideBasePrompt(): string {
+function getCodePilotCodeGuideBasePrompt(): string {
   // Ant-native builds alias find/grep to embedded bfs/ugrep and remove the
   // dedicated Glob/Grep tools, so point at find/grep instead.
   const localSearchHint = hasEmbeddedSearchTools()
@@ -74,7 +74,7 @@ function getClaudeCodeGuideBasePrompt(): string {
 4. Fetch the specific documentation pages
 5. Provide clear, actionable guidance based on official documentation
 6. Use ${WEB_SEARCH_TOOL_NAME} if docs don't cover the topic
-7. Reference local project files (CLAUDE.md, .claude/ directory) when relevant using ${localSearchHint}
+7. Reference local project files (codepilot.md, .codepilot/ directory) when relevant using ${localSearchHint}
 
 **Guidelines:**
 - Always prioritize official documentation over assumptions
@@ -135,7 +135,7 @@ export const CODEPILOT_GUIDE_AGENT: BuiltInAgentDefinition = {
       )
     }
 
-    // 2. Custom agents from .claude/agents/
+    // 2. Custom agents from .codepilot/agents/
     const customAgents =
       toolUseContext.options.agentDefinitions.activeAgents.filter(
         (a: AgentDefinition) => a.source !== 'built-in',
@@ -181,7 +181,7 @@ export const CODEPILOT_GUIDE_AGENT: BuiltInAgentDefinition = {
 
     // Add the feedback guideline (conditional based on whether user is using 3P services)
     const feedbackGuideline = getFeedbackGuideline()
-    const basePromptWithFeedback = `${getClaudeCodeGuideBasePrompt()}
+    const basePromptWithFeedback = `${getCodePilotCodeGuideBasePrompt()}
 ${feedbackGuideline}`
 
     // If we have any context to add, append it to the base system prompt

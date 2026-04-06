@@ -1,5 +1,5 @@
 import { feature } from 'bun:bundle';
-import type { ContentBlockParam, TextBlockParam } from '@anthropic-ai/sdk/resources';
+import type { ContentBlockParam, TextBlockParam } from 'src/types/contentBlocks.js';
 import { randomUUID } from 'crypto';
 import { setPromptId } from 'src/bootstrap/state.js';
 import { builtInCommandNames, type Command, type CommandBase, findCommand, getCommand, getCommandName, hasCommand, type PromptCommand } from 'src/commands.js';
@@ -540,7 +540,7 @@ async function getMessagesForSlashCommand(commandName: string, args: string, set
           precedingInputBlocks
         })
       }), createUserMessage({
-        content: `This skill can only be invoked by Claude, not directly by users. Ask Claude to use the "${commandName}" skill for you.`
+        content: `This skill can only be invoked by CodePilot, not directly by users. Ask CodePilot to use the "${commandName}" skill for you.`
       })],
       shouldQuery: false,
       command

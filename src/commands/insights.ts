@@ -14,13 +14,13 @@ import {
 import { tmpdir } from 'os'
 import { extname, join } from 'path'
 import type { Command } from '../commands.js'
-import { queryWithModel } from '../services/api/claude.js'
+import { queryWithModel } from '../services/api/codepilot.js'
 import {
   AGENT_TOOL_NAME,
   LEGACY_AGENT_TOOL_NAME,
 } from '../tools/AgentTool/constants.js'
 import type { LogOption } from '../types/logs.js'
-import { getClaudeConfigHomeDir } from '../utils/envUtils.js'
+import { getCodePilotConfigHomeDir } from '../utils/envUtils.js'
 import { toError } from '../utils/errors.js'
 import { execFileNoThrow } from '../utils/execFileNoThrow.js'
 import { logError } from '../utils/log.js'
@@ -87,7 +87,7 @@ const getRemoteHostSessionCount: (hs: string) => Promise<number> =
           'ssh',
           [
             `${homespace}.coder`,
-            'find /root/.claude/projects -name "*.jsonl" 2>/dev/null | wc -l',
+            'find /root/.codepilot/projects -name "*.jsonl" 2>/dev/null | wc -l',
           ],
           { timeout: 30000 },
         )
@@ -105,13 +105,13 @@ const collectFromRemoteHost: (
         const result = { copied: 0, skipped: 0 }
 
         // Create temp directory
-        const tempDir = await mkdtemp(join(tmpdir(), 'claude-hs-'))
+        const tempDir = await mkdtemp(join(tmpdir(), 'codepilot-hs-'))
 
         try {
           // SCP the projects folder
           const scpResult = await execFileNoThrow(
             'scp',
-            ['-rq', `${homespace}.coder:/root/.claude/projects/`, tempDir],
+            ['-rq', `${homespace}.coder:/root/.codepilot/projects/`, tempDir],
             { timeout: 300000 },
           )
           if (scpResult.code !== 0) {
@@ -263,13 +263,13 @@ type SessionFacets = {
   goal_categories: Record<string, number>
   outcome: string
   user_satisfaction_counts: Record<string, number>
-  claude_helpfulness: string
+  helpfulness: string
   session_type: string
   friction_counts: Record<string, number>
   friction_detail: string
   primary_success: string
   brief_summary: string
-  user_instructions_to_claude?: string[]
+  user_instructions?: string[]
 }
 
 type AggregatedData = {
@@ -377,7 +377,7 @@ const LABEL_MAP: Record<string, string> = {
   wrong_approach: 'Wrong Approach',
   buggy_code: 'Buggy Code',
   user_rejected_action: 'User Rejected Action',
-  claude_got_blocked: 'CodePilot Got Blocked',
+  codepilot_got_blocked: 'CodePilot Got Blocked',
   user_stopped_early: 'User Stopped Early',
   wrong_file_or_location: 'Wrong File/Location',
   excessive_changes: 'Excessive Changes',
@@ -414,11 +414,11 @@ const LABEL_MAP: Record<string, string> = {
   essential: 'Essential',
 }
 
-// Lazy getters: getClaudeConfigHomeDir() is memoized and reads process.env.
+// Lazy getters: getCodePilotConfigHomeDir() is memoized and reads process.env.
 // Calling it at module scope would populate the memoize cache before
-// entrypoints can set CLAUDE_CONFIG_DIR, breaking all 150+ other callers.
+// entrypoints can set codepilot_CONFIG_DIR, breaking all 150+ other callers.
 function getDataDir(): string {
-  return join(getClaudeConfigHomeDir(), 'usage-data')
+  return join(getCodePilotConfigHomeDir(), 'usage-data')
 }
 function getFacetsDir(): string {
   return join(getDataDir(), 'facets')
@@ -1015,7 +1015,7 @@ RESPOND WITH ONLY A VALID JSON OBJECT matching this schema:
   "goal_categories": {"category_name": count, ...},
   "outcome": "fully_achieved|mostly_achieved|partially_achieved|not_achieved|unclear_from_transcript",
   "user_satisfaction_counts": {"level": count, ...},
-  "claude_helpfulness": "unhelpful|slightly_helpful|moderately_helpful|very_helpful|essential",
+  "helpfulness": "unhelpful|slightly_helpful|moderately_helpful|very_helpful|essential",
   "session_type": "single_task|multi_task|iterative_refinement|exploration|quick_question",
   "friction_counts": {"friction_type": count, ...},
   "friction_detail": "One sentence describing friction or empty",
@@ -1086,7 +1086,7 @@ export function detectMultiClauding(
   allSessionMessages.sort((a, b) => a.ts - b.ts)
 
   const multiCodePilotSessionPairs = new Set<string>()
-  const messagesDuringMulticlaude = new Set<string>()
+  const messagesDuringMultiAgent = new Set<string>()
 
   // Sliding window: sessionLastIndex tracks the most recent index for each session
   let windowStart = 0
@@ -1115,11 +1115,11 @@ export function detectMultiClauding(
         if (between.sessionId !== msg.sessionId) {
           const pair = [msg.sessionId, between.sessionId].sort().join(':')
           multiCodePilotSessionPairs.add(pair)
-          messagesDuringMulticlaude.add(
+          messagesDuringMultiAgent.add(
             `${allSessionMessages[prevIndex]!.ts}:${msg.sessionId}`,
           )
-          messagesDuringMulticlaude.add(`${between.ts}:${between.sessionId}`)
-          messagesDuringMulticlaude.add(`${msg.ts}:${msg.sessionId}`)
+          messagesDuringMultiAgent.add(`${between.ts}:${between.sessionId}`)
+          messagesDuringMultiAgent.add(`${msg.ts}:${msg.sessionId}`)
           break
         }
       }
@@ -1138,7 +1138,7 @@ export function detectMultiClauding(
   return {
     overlap_events: multiCodePilotSessionPairs.size,
     sessions_involved: sessionsWithOverlaps.size,
-    user_messages_during: messagesDuringMulticlaude.size,
+    user_messages_during: messagesDuringMultiAgent.size,
   }
 }
 
@@ -1262,8 +1262,8 @@ function aggregateData(
       }
 
       // Helpfulness
-      result.helpfulness[sessionFacets.claude_helpfulness] =
-        (result.helpfulness[sessionFacets.claude_helpfulness] || 0) + 1
+      result.helpfulness[sessionFacets.helpfulness] =
+        (result.helpfulness[sessionFacets.helpfulness] || 0) + 1
 
       // Session types
       result.session_types[sessionFacets.session_type] =
@@ -1395,19 +1395,19 @@ Include 3 friction categories with 2 examples each.`,
 
 ## CC FEATURES REFERENCE (pick from these for features_to_try):
 1. **MCP Servers**: Connect CodePilot to external tools, databases, and APIs via Model Context Protocol.
-   - How to use: Run \`claude mcp add <server-name> -- <command>\`
+   - How to use: Run \`codepilot mcp add <server-name> -- <command>\`
    - Good for: database queries, Slack integration, GitHub issue lookup, connecting to internal APIs
 
 2. **Custom Skills**: Reusable prompts you define as markdown files that run with a single /command.
-   - How to use: Create \`.claude/skills/commit/SKILL.md\` with instructions. Then type \`/commit\` to run it.
+   - How to use: Create \`.codepilot/skills/commit/SKILL.md\` with instructions. Then type \`/commit\` to run it.
    - Good for: repetitive workflows - /commit, /review, /test, /deploy, /pr, or complex multi-step workflows
 
 3. **Hooks**: Shell commands that auto-run at specific lifecycle events.
-   - How to use: Add to \`.claude/settings.json\` under "hooks" key.
+   - How to use: Add to \`.codepilot/settings.json\` under "hooks" key.
    - Good for: auto-formatting code, running type checks, enforcing conventions
 
 4. **Headless Mode**: Run CodePilot non-interactively from scripts and CI/CD.
-   - How to use: \`claude -p "fix lint errors" --allowedTools "Edit,Read,Bash"\`
+   - How to use: \`codepilot -p "fix lint errors" --allowedTools "Edit,Read,Bash"\`
    - Good for: CI/CD integration, batch code fixes, automated reviews
 
 5. **Task Agents**: CodePilot spawns focused sub-agents for complex exploration or parallel work.
@@ -1416,8 +1416,8 @@ Include 3 friction categories with 2 examples each.`,
 
 RESPOND WITH ONLY A VALID JSON OBJECT:
 {
-  "claude_md_additions": [
-    {"addition": "A specific line or block to add to CLAUDE.md based on workflow patterns. E.g., 'Always run tests after modifying auth-related files'", "why": "1 sentence explaining why this would help based on actual sessions", "prompt_scaffold": "Instructions for where to add this in CLAUDE.md. E.g., 'Add under ## Testing section'"}
+  "config_md_additions": [
+    {"addition": "A specific line or block to add to codepilot.md based on workflow patterns. E.g., 'Always run tests after modifying auth-related files'", "why": "1 sentence explaining why this would help based on actual sessions", "prompt_scaffold": "Instructions for where to add this in codepilot.md. E.g., 'Add under ## Testing section'"}
   ],
   "features_to_try": [
     {"feature": "Feature name from CC FEATURES REFERENCE above", "one_liner": "What it does", "why_for_you": "Why this would help YOU based on your sessions", "example_code": "Actual command or config to copy"}
@@ -1427,7 +1427,7 @@ RESPOND WITH ONLY A VALID JSON OBJECT:
   ]
 }
 
-IMPORTANT for claude_md_additions: PRIORITIZE instructions that appear MULTIPLE TIMES in the user data. If user told CodePilot the same thing in 2+ sessions (e.g., 'always run tests', 'use TypeScript'), that's a PRIME candidate - they shouldn't have to repeat themselves.
+IMPORTANT for config_md_additions: PRIORITIZE instructions that appear MULTIPLE TIMES in the user data. If user told CodePilot the same thing in 2+ sessions (e.g., 'always run tests', 'use TypeScript'), that's a PRIME candidate - they shouldn't have to repeat themselves.
 
 IMPORTANT for features_to_try: Pick 2-3 from the CC FEATURES REFERENCE above. Include 2-3 items for each category.`,
     maxTokens: 8192,
@@ -1521,7 +1521,7 @@ type InsightResults = {
     }>
   }
   suggestions?: {
-    claude_md_additions?: Array<{
+    config_md_additions?: Array<{
       addition: string
       why: string
       where?: string
@@ -1616,7 +1616,7 @@ async function generateParallelInsights(
   // Build data context string
   const facetSummaries = Array.from(facets.values())
     .slice(0, 50)
-    .map(f => `- ${f.brief_summary} (${f.outcome}, ${f.claude_helpfulness})`)
+    .map(f => `- ${f.brief_summary} (${f.outcome}, ${f.helpfulness})`)
     .join('\n')
 
   const frictionDetails = Array.from(facets.values())
@@ -1626,7 +1626,7 @@ async function generateParallelInsights(
     .join('\n')
 
   const userInstructions = Array.from(facets.values())
-    .flatMap(f => f.user_instructions_to_claude || [])
+    .flatMap(f => f.user_instructions || [])
     .slice(0, 15)
     .map(i => `- ${i}`)
     .join('\n')
@@ -1661,7 +1661,7 @@ async function generateParallelInsights(
     facetSummaries +
     '\n\nFRICTION DETAILS:\n' +
     frictionDetails +
-    '\n\nUSER INSTRUCTIONS TO CLAUDE:\n' +
+    '\n\nUSER INSTRUCTIONS TO codepilot:\n' +
     (userInstructions || 'None captured')
 
   // Run sections in parallel first (excluding at_a_glance)
@@ -2064,21 +2064,21 @@ function generateHtmlReport(
   const suggestionsHtml = suggestions
     ? `
     ${
-      suggestions.claude_md_additions &&
-      suggestions.claude_md_additions.length > 0
+      suggestions.config_md_additions &&
+      suggestions.config_md_additions.length > 0
         ? `
     <h2 id="section-features">Existing CC Features to Try</h2>
-    <div class="claude-md-section">
-      <h3>Suggested CLAUDE.md Additions</h3>
-      <p style="font-size: 12px; color: #64748b; margin-bottom: 12px;">Just copy this into CodePilot to add it to your CLAUDE.md.</p>
-      <div class="claude-md-actions">
+    <div class="codepilot-md-section">
+      <h3>Suggested codepilot.md Additions</h3>
+      <p style="font-size: 12px; color: #64748b; margin-bottom: 12px;">Just copy this into CodePilot to add it to your codepilot.md.</p>
+      <div class="codepilot-md-actions">
         <button class="copy-all-btn" onclick="copyAllCheckedCodePilotMd()">Copy All Checked</button>
       </div>
-      ${suggestions.claude_md_additions
+      ${suggestions.config_md_additions
         .map(
           (add, i) => `
-        <div class="claude-md-item">
-          <input type="checkbox" id="cmd-${i}" class="cmd-checkbox" checked data-text="${escapeHtml(add.prompt_scaffold || add.where || 'Add to CLAUDE.md')}\\n\\n${escapeHtml(add.addition)}">
+        <div class="codepilot-md-item">
+          <input type="checkbox" id="cmd-${i}" class="cmd-checkbox" checked data-text="${escapeHtml(add.prompt_scaffold || add.where || 'Add to codepilot.md')}\\n\\n${escapeHtml(add.addition)}">
           <label for="cmd-${i}">
             <code class="cmd-code">${escapeHtml(add.addition)}</code>
             <button class="copy-btn" onclick="copyCmdItem(${i})">Copy</button>
@@ -2310,14 +2310,14 @@ function generateHtmlReport(
     .friction-desc { font-size: 13px; color: #7f1d1d; margin-bottom: 10px; }
     .friction-examples { margin: 0 0 0 20px; font-size: 13px; color: #334155; }
     .friction-examples li { margin-bottom: 4px; }
-    .claude-md-section { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
-    .claude-md-section h3 { font-size: 14px; font-weight: 600; color: #1e40af; margin: 0 0 12px 0; }
-    .claude-md-actions { margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #dbeafe; }
+    .codepilot-md-section { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
+    .codepilot-md-section h3 { font-size: 14px; font-weight: 600; color: #1e40af; margin: 0 0 12px 0; }
+    .codepilot-md-actions { margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #dbeafe; }
     .copy-all-btn { background: #2563eb; color: white; border: none; border-radius: 4px; padding: 6px 12px; font-size: 12px; cursor: pointer; font-weight: 500; transition: all 0.2s; }
     .copy-all-btn:hover { background: #1d4ed8; }
     .copy-all-btn.copied { background: #16a34a; }
-    .claude-md-item { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; padding: 10px 0; border-bottom: 1px solid #dbeafe; }
-    .claude-md-item:last-child { border-bottom: none; }
+    .codepilot-md-item { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; padding: 10px 0; border-bottom: 1px solid #dbeafe; }
+    .codepilot-md-item:last-child { border-bottom: none; }
     .cmd-checkbox { margin-top: 2px; }
     .cmd-code { background: white; padding: 8px 12px; border-radius: 4px; font-size: 12px; color: #1e40af; border: 1px solid #bfdbfe; font-family: monospace; display: block; white-space: pre-wrap; word-break: break-word; flex: 1; }
     .cmd-why { font-size: 12px; color: #64748b; width: 100%; padding-left: 24px; margin-top: 4px; }
@@ -2650,13 +2650,13 @@ function generateHtmlReport(
 // ============================================================================
 
 /**
- * Structured export format for claudescope consumption
+ * Structured export format for codepilotscope consumption
  */
 export type InsightsExport = {
   metadata: {
     username: string
     generated_at: string
-    claude_code_version: string
+    codepilot_version: string
     date_range: { start: string; end: string }
     session_count: number
     remote_hosts_collected?: string[]
@@ -2722,7 +2722,7 @@ export function buildExportData(
     metadata: {
       username: process.env.SAFEUSER || process.env.USER || 'unknown',
       generated_at: new Date().toISOString(),
-      claude_code_version: version,
+      codepilot_version: version,
       date_range: data.date_range,
       session_count: data.total_sessions,
       ...(remote_hosts_collected &&
@@ -2806,7 +2806,7 @@ export async function generateUsageReport(options?: {
 
   // Optionally collect data from remote hosts first (ant-only)
   if (process.env.USER_TYPE === 'ant' && options?.collectRemote) {
-    const destDir = join(getClaudeConfigHomeDir(), 'projects')
+    const destDir = join(getCodePilotConfigHomeDir(), 'projects')
     const { hosts, totalCopied } = await collectAllRemoteHostData(destDir)
     remoteStats = { hosts, totalCopied }
   }
@@ -2994,7 +2994,7 @@ export async function generateUsageReport(options?: {
   const aggregated = aggregateData(substantiveSessions, substantiveFacets)
   aggregated.total_sessions_scanned = totalSessionsScanned
 
-  // Generate parallel insights from Claude (6 sections)
+  // Generate parallel insights from CodePilot (6 sections)
   const insights = await generateParallelInsights(aggregated, facets)
 
   // Generate HTML report
@@ -3081,8 +3081,8 @@ const usageReport: Command = {
         .slice(0, 15)
       const username = process.env.SAFEUSER || process.env.USER || 'unknown'
       const filename = `${username}_insights_${timestamp}.html`
-      const s3Path = `s3://anthropic-serve/atamkin/cc-user-reports/${filename}`
-      const s3Url = `https://s3-frontend.infra.ant.dev/anthropic-serve/atamkin/cc-user-reports/${filename}`
+      const s3Path = `s3://codepilot-serve/atamkin/cc-user-reports/${filename}`
+      const s3Url = `https://s3-frontend.infra.ant.dev/codepilot-serve/atamkin/cc-user-reports/${filename}`
 
       reportUrl = s3Url
       try {
@@ -3152,7 +3152,7 @@ ${remoteInfo}
 
 Your full shareable insights report is ready: ${reportUrl}${uploadHint}`
 
-    // Return prompt for Claude to respond to
+    // Return prompt for CodePilot to respond to
     return [
       {
         type: 'text',

@@ -2,19 +2,19 @@ import memoize from 'lodash-es/memoize.js'
 import { homedir } from 'os'
 import { join } from 'path'
 
-// Memoized: 150+ callers, many on hot paths. Keyed off CLAUDE_CONFIG_DIR so
+// Memoized: 150+ callers, many on hot paths. Keyed off codepilot_CONFIG_DIR so
 // tests that change the env var get a fresh value without explicit cache.clear.
-export const getClaudeConfigHomeDir = memoize(
+export const getCodePilotConfigHomeDir = memoize(
   (): string => {
     return (
-      process.env.CLAUDE_CONFIG_DIR ?? join(homedir(), '.claude')
+      process.env.codepilot_CONFIG_DIR ?? join(homedir(), '.codepilot')
     ).normalize('NFC')
   },
-  () => process.env.CLAUDE_CONFIG_DIR,
+  () => process.env.codepilot_CONFIG_DIR,
 )
 
 export function getTeamsDir(): string {
-  return join(getClaudeConfigHomeDir(), 'teams')
+  return join(getCodePilotConfigHomeDir(), 'teams')
 }
 
 /**
@@ -49,7 +49,7 @@ export function isEnvDefinedFalsy(
 /**
  * --bare / CODEPILOT_SIMPLE — skip hooks, LSP, plugin sync, skill dir-walk,
  * attribution, background prefetches, and ALL keychain/credential reads.
- * Auth is strictly ANTHROPIC_API_KEY env or apiKeyHelper from --settings.
+ * Auth is strictly CODEPILOT_API_KEY env or apiKeyHelper from --settings.
  * Explicit CLI flags (--plugin-dir, --add-dir, --mcp-config) still honored.
  * ~30 gates across the codebase.
  *
@@ -91,7 +91,7 @@ export function parseEnvVars(
 
 /**
  * Get the AWS region with fallback to default
- * Matches the Anthropic Bedrock SDK's region behavior
+ * Matches the Bedrock SDK's region behavior
  */
 export function getAWSRegion(): string {
   return process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1'
@@ -106,10 +106,10 @@ export function getDefaultVertexRegion(): string {
 
 /**
  * Check if bash commands should maintain project working directory (reset to original after each command)
- * @returns true if CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR is set to a truthy value
+ * @returns true if codepilot_BASH_MAINTAIN_PROJECT_WORKING_DIR is set to a truthy value
  */
 export function shouldMaintainProjectWorkingDir(): boolean {
-  return isEnvTruthy(process.env.CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR)
+  return isEnvTruthy(process.env.codepilot_BASH_MAINTAIN_PROJECT_WORKING_DIR)
 }
 
 /**
@@ -150,18 +150,18 @@ export function isInProtectedNamespace(): boolean {
 /**
  * Model prefix → env var for Vertex region overrides.
  * Order matters: more specific prefixes must come before less specific ones
- * (e.g., 'claude-opus-4-1' before 'claude-opus-4').
+ * (e.g., 'codepilot-opus-4-1' before 'codepilot-opus-4').
  */
 const VERTEX_REGION_OVERRIDES: ReadonlyArray<[string, string]> = [
-  ['claude-haiku-4-5', 'VERTEX_REGION_CLAUDE_HAIKU_4_5'],
-  ['claude-3-5-haiku', 'VERTEX_REGION_CLAUDE_3_5_HAIKU'],
-  ['claude-3-5-sonnet', 'VERTEX_REGION_CLAUDE_3_5_SONNET'],
-  ['claude-3-7-sonnet', 'VERTEX_REGION_CLAUDE_3_7_SONNET'],
-  ['claude-opus-4-1', 'VERTEX_REGION_CLAUDE_4_1_OPUS'],
-  ['claude-opus-4', 'VERTEX_REGION_CLAUDE_4_0_OPUS'],
-  ['claude-sonnet-4-6', 'VERTEX_REGION_CLAUDE_4_6_SONNET'],
-  ['claude-sonnet-4-5', 'VERTEX_REGION_CLAUDE_4_5_SONNET'],
-  ['claude-sonnet-4', 'VERTEX_REGION_CLAUDE_4_0_SONNET'],
+  ['codepilot-haiku-4-5', 'VERTEX_REGION_codepilot_HAIKU_4_5'],
+  ['codepilot-3-5-haiku', 'VERTEX_REGION_codepilot_3_5_HAIKU'],
+  ['codepilot-3-5-sonnet', 'VERTEX_REGION_codepilot_3_5_SONNET'],
+  ['codepilot-3-7-sonnet', 'VERTEX_REGION_codepilot_3_7_SONNET'],
+  ['codepilot-opus-4-1', 'VERTEX_REGION_codepilot_4_1_OPUS'],
+  ['codepilot-opus-4', 'VERTEX_REGION_codepilot_4_0_OPUS'],
+  ['codepilot-sonnet-4-6', 'VERTEX_REGION_codepilot_4_6_SONNET'],
+  ['codepilot-sonnet-4-5', 'VERTEX_REGION_codepilot_4_5_SONNET'],
+  ['codepilot-sonnet-4', 'VERTEX_REGION_codepilot_4_0_SONNET'],
 ]
 
 /**

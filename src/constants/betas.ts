@@ -1,4 +1,4 @@
-export const CLAUDE_CODE_20250219_BETA_HEADER = ''
+export const codepilot_CODE_20250219_BETA_HEADER = ''
 export const INTERLEAVED_THINKING_BETA_HEADER = ''
 export const CONTEXT_1M_BETA_HEADER = ''
 export const CONTEXT_MANAGEMENT_BETA_HEADER = ''

@@ -1,7 +1,7 @@
 /**
  * Teammate Mailbox - File-based messaging system for agent swarms
  *
- * Each teammate has an inbox file at .claude/teams/{team_name}/inboxes/{agent_name}.json
+ * Each teammate has an inbox file at .codepilot/teams/{team_name}/inboxes/{agent_name}.json
  * Other teammates can write messages to it, and the recipient sees them as attachments.
  *
  * Note: Inboxes are keyed by agent name within a team.
@@ -28,7 +28,7 @@ import { TEAM_LEAD_NAME } from './swarm/constants.js'
 import { sanitizePathComponent } from './tasks.js'
 import { getAgentName, getTeammateColor, getTeamName } from './teammate.js'
 
-// Lock options: retry with backoff so concurrent callers (multiple Claudes
+// Lock options: retry with backoff so concurrent callers (multiple CodePilots
 // in a swarm) wait for the lock instead of failing immediately. The sync
 // lockSync API blocked the event loop; the async API needs explicit retries
 // to achieve the same serialization semantics.
@@ -51,7 +51,7 @@ export type TeammateMessage = {
 
 /**
  * Get the path to a teammate's inbox file
- * Structure: ~/.claude/teams/{team_name}/inboxes/{agent_name}.json
+ * Structure: ~/.codepilot/teams/{team_name}/inboxes/{agent_name}.json
  */
 export function getInboxPath(agentName: string, teamName?: string): string {
   const team = teamName || getTeamName() || 'default'

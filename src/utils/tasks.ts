@@ -4,7 +4,7 @@ import { z } from 'zod/v4'
 import { getIsNonInteractiveSession, getSessionId } from '../bootstrap/state.js'
 import { uniq } from './array.js'
 import { logForDebugging } from './debug.js'
-import { getClaudeConfigHomeDir, getTeamsDir, isEnvTruthy } from './envUtils.js'
+import { getCodePilotConfigHomeDir, getTeamsDir, isEnvTruthy } from './envUtils.js'
 import { errorMessage, getErrnoCode } from './errors.js'
 import { lazySchema } from './lazySchema.js'
 import * as lockfile from './lockfile.js'
@@ -91,7 +91,7 @@ export type Task = z.infer<ReturnType<typeof TaskSchema>>
 // High water mark file name - stores the maximum task ID ever assigned
 const HIGH_WATER_MARK_FILE = '.highwatermark'
 
-// Lock options: retry with backoff so concurrent callers (multiple Claudes
+// Lock options: retry with backoff so concurrent callers (multiple CodePilots
 // in a swarm) wait for the lock instead of failing immediately. The sync
 // lockSync API blocked the event loop; the async API needs explicit retries
 // to achieve the same serialization semantics.
@@ -142,7 +142,7 @@ export function isTodoV2Enabled(): boolean {
  * Resets the task list for a new swarm - clears any existing tasks.
  * Writes a high water mark file to prevent ID reuse after reset.
  * Should be called when a new swarm is created to ensure task numbering starts at 1.
- * Uses file locking to prevent race conditions when multiple Claudes run in parallel.
+ * Uses file locking to prevent race conditions when multiple CodePilots run in parallel.
  */
 export async function resetTaskList(taskListId: string): Promise<void> {
   const dir = getTasksDir(taskListId)
@@ -220,7 +220,7 @@ export function sanitizePathComponent(input: string): string {
 
 export function getTasksDir(taskListId: string): string {
   return join(
-    getClaudeConfigHomeDir(),
+    getCodePilotConfigHomeDir(),
     'tasks',
     sanitizePathComponent(taskListId),
   )

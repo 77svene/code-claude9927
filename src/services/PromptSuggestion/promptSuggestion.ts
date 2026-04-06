@@ -23,7 +23,7 @@ import {
   type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
   logEvent,
 } from '../analytics/index.js'
-import { currentLimits } from '../claudeAiLimits.js'
+import { currentLimits } from '../apiLimits.js'
 import { isSpeculationEnabled, startSpeculation } from './speculation.js'
 
 let currentAbortController: AbortController | null = null
@@ -266,7 +266,7 @@ THE TEST: Would they think "I was just about to type that"?
 EXAMPLES:
 User asked "fix the bug and run tests", bug is fixed → "run the tests"
 After code written → "try it out"
-Claude offers options → suggest the one the user would likely pick, based on conversation
+CodePilot offers options → suggest the one the user would likely pick, based on conversation
 CodePilot asks to continue → "yes" or "go ahead"
 Task complete, obvious follow-up → "commit this" or "push it"
 After error or misunderstanding → silence (let them assess/correct)
@@ -437,7 +437,7 @@ export function shouldFilterSuggestion(
         ),
     ],
     [
-      'claude_voice',
+      'codepilot_voice',
       () =>
         /^(let me|i'll|i've|i'm|i can|i would|i think|i notice|here's|here is|here are|that's|this is|this will|you can|you should|you could|sure,|of course|certainly)/i.test(
           suggestion,

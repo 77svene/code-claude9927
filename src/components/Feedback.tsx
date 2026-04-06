@@ -10,7 +10,7 @@ import type { CommandResultDisplay } from '../commands.js';
 import { useTerminalSize } from '../hooks/useTerminalSize.js';
 import { Box, Text, useInput } from '../ink.js';
 import { useKeybinding } from '../keybindings/useKeybinding.js';
-import { queryHaiku } from '../services/api/claude.js';
+import { queryHaiku } from '../services/api/codepilot.js';
 import { startsWithApiErrorPrefix } from '../services/api/errors.js';
 import type { Message } from '../types/message.js';
 import { checkAndRefreshOAuthTokenIfNeeded } from '../utils/auth.js';
@@ -32,7 +32,7 @@ import TextInput from './TextInput.js';
 
 // This value was determined experimentally by testing the URL length limit
 const GITHUB_URL_LIMIT = 7250;
-const GITHUB_ISSUES_REPO_URL = "external" === 'ant' ? 'https://github.com/anthropics/claude-cli-internal/issues' : 'https://github.com/anthropics/claude-code/issues';
+const GITHUB_ISSUES_REPO_URL = "external" === 'ant' ? 'https://github.com/codepilots/codepilot-cli-internal/issues' : 'https://github.com/codepilot/codepilot/issues';
 type Props = {
   abortSignal: AbortSignal;
   messages: Message[];
@@ -71,7 +71,7 @@ type FeedbackData = {
 export function redactSensitiveInfo(text: string): string {
   let redacted = text;
 
-  // Anthropic API keys (sk-ant...) with or without quotes
+  // CodePilot API keys (sk-ant...) with or without quotes
   // First handle the case with quotes
   redacted = redacted.replace(/"(sk-ant[^\s"']{24,})"/g, '"[REDACTED_API_KEY]"');
   // Then handle the cases without quotes - more general pattern
@@ -540,7 +540,7 @@ async function submitFeedback(data: FeedbackData, signal?: AbortSignal): Promise
       'User-Agent': getUserAgent(),
       ...authResult.headers
     };
-    const response = await axios.post('https://api.anthropic.com/api/claude_cli_feedback', {
+    const response = await axios.post('https://api.codepilot.local/api/codepilot_cli_feedback', {
       content: jsonStringify(data)
     }, {
       headers,

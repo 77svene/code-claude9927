@@ -14,30 +14,30 @@ const LOCAL_MODEL_CONFIG: ModelConfig = {
   foundry: localModel(),
 }
 
-export const CLAUDE_3_7_SONNET_CONFIG = LOCAL_MODEL_CONFIG
-export const CLAUDE_3_5_V2_SONNET_CONFIG = LOCAL_MODEL_CONFIG
-export const CLAUDE_3_5_HAIKU_CONFIG = LOCAL_MODEL_CONFIG
-export const CLAUDE_HAIKU_4_5_CONFIG = LOCAL_MODEL_CONFIG
-export const CLAUDE_SONNET_4_CONFIG = LOCAL_MODEL_CONFIG
-export const CLAUDE_SONNET_4_5_CONFIG = LOCAL_MODEL_CONFIG
-export const CLAUDE_OPUS_4_CONFIG = LOCAL_MODEL_CONFIG
-export const CLAUDE_OPUS_4_1_CONFIG = LOCAL_MODEL_CONFIG
-export const CLAUDE_OPUS_4_5_CONFIG = LOCAL_MODEL_CONFIG
-export const CLAUDE_OPUS_4_6_CONFIG = LOCAL_MODEL_CONFIG
-export const CLAUDE_SONNET_4_6_CONFIG = LOCAL_MODEL_CONFIG
+export const codepilot_3_7_SONNET_CONFIG = LOCAL_MODEL_CONFIG
+export const codepilot_3_5_V2_SONNET_CONFIG = LOCAL_MODEL_CONFIG
+export const codepilot_3_5_HAIKU_CONFIG = LOCAL_MODEL_CONFIG
+export const codepilot_HAIKU_4_5_CONFIG = LOCAL_MODEL_CONFIG
+export const codepilot_SONNET_4_CONFIG = LOCAL_MODEL_CONFIG
+export const codepilot_SONNET_4_5_CONFIG = LOCAL_MODEL_CONFIG
+export const codepilot_OPUS_4_CONFIG = LOCAL_MODEL_CONFIG
+export const codepilot_OPUS_4_1_CONFIG = LOCAL_MODEL_CONFIG
+export const codepilot_OPUS_4_5_CONFIG = LOCAL_MODEL_CONFIG
+export const codepilot_OPUS_4_6_CONFIG = LOCAL_MODEL_CONFIG
+export const codepilot_SONNET_4_6_CONFIG = LOCAL_MODEL_CONFIG
 
 export const ALL_MODEL_CONFIGS = {
-  haiku35: CLAUDE_3_5_HAIKU_CONFIG,
-  haiku45: CLAUDE_HAIKU_4_5_CONFIG,
-  sonnet35: CLAUDE_3_5_V2_SONNET_CONFIG,
-  sonnet37: CLAUDE_3_7_SONNET_CONFIG,
-  sonnet40: CLAUDE_SONNET_4_CONFIG,
-  sonnet45: CLAUDE_SONNET_4_5_CONFIG,
-  sonnet46: CLAUDE_SONNET_4_6_CONFIG,
-  opus40: CLAUDE_OPUS_4_CONFIG,
-  opus41: CLAUDE_OPUS_4_1_CONFIG,
-  opus45: CLAUDE_OPUS_4_5_CONFIG,
-  opus46: CLAUDE_OPUS_4_6_CONFIG,
+  haiku35: codepilot_3_5_HAIKU_CONFIG,
+  haiku45: codepilot_HAIKU_4_5_CONFIG,
+  sonnet35: codepilot_3_5_V2_SONNET_CONFIG,
+  sonnet37: codepilot_3_7_SONNET_CONFIG,
+  sonnet40: codepilot_SONNET_4_CONFIG,
+  sonnet45: codepilot_SONNET_4_5_CONFIG,
+  sonnet46: codepilot_SONNET_4_6_CONFIG,
+  opus40: codepilot_OPUS_4_CONFIG,
+  opus41: codepilot_OPUS_4_1_CONFIG,
+  opus45: codepilot_OPUS_4_5_CONFIG,
+  opus46: codepilot_OPUS_4_6_CONFIG,
 } as const satisfies Record<string, ModelConfig>
 
 export type ModelKey = keyof typeof ALL_MODEL_CONFIGS

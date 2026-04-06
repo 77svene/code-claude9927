@@ -342,7 +342,7 @@ export const FileEditTool = buildTool({
       }
     }
 
-    // Additional validation for Claude settings files
+    // Additional validation for CodePilot settings files
     const settingsValidationResult = validateInputForSettingsFileEdit(
       fullFilePath,
       file,
@@ -525,8 +525,8 @@ export const FileEditTool = buildTool({
     })
 
     // 7. Log events
-    if (absoluteFilePath.endsWith(`${sep}CLAUDE.md`)) {
-      logEvent('tengu_write_claudemd', {})
+    if (absoluteFilePath.endsWith(`${sep}codepilot.md`)) {
+      logEvent('tengu_write_configmd', {})
     }
     countLinesChanged(patch)
 

@@ -22,8 +22,8 @@ import { sequential } from './sequential.js'
  * Includes both SSH and HTTPS URL formats.
  *
  * NOTE: This is intentionally a repo allowlist, not an org-wide check.
- * The anthropics and anthropic-experimental orgs contain PUBLIC repos
- * (e.g. anthropics/claude-code, anthropic-experimental/sandbox-runtime).
+ * The codepilots and codepilot-experimental orgs contain PUBLIC repos
+ * (e.g. codepilot/codepilot, codepilot-experimental/sandbox-runtime).
  * Undercover mode must stay ON in those to prevent codename leaks.
  * Only add repos here that are confirmed PRIVATE.
  */
@@ -112,7 +112,7 @@ export function sanitizeModelName(shortName: string): string {
 }
 
 /**
- * Attribution state for tracking Claude's contributions to files.
+ * Attribution state for tracking CodePilot's contributions to files.
  */
 export type AttributionState = {
   // File states keyed by relative path (from cwd)
@@ -136,11 +136,11 @@ export type AttributionState = {
 }
 
 /**
- * Summary of Claude's contribution for a commit.
+ * Summary of CodePilot's contribution for a commit.
  */
 export type AttributionSummary = {
-  claudePercent: number
-  claudeChars: number
+  accentPercent: number
+  promptChars: number
   humanChars: number
   surfaces: string[]
 }
@@ -149,7 +149,7 @@ export type AttributionSummary = {
  * Per-file attribution details for git notes.
  */
 export type FileAttribution = {
-  claudeChars: number
+  promptChars: number
   humanChars: number
   percent: number
   surface: string
@@ -162,7 +162,7 @@ export type AttributionData = {
   version: 1
   summary: AttributionSummary
   files: Record<string, FileAttribution>
-  surfaceBreakdown: Record<string, { claudeChars: number; percent: number }>
+  surfaceBreakdown: Record<string, { promptChars: number; percent: number }>
   excludedGenerated: string[]
   sessions: string[]
 }
@@ -176,7 +176,7 @@ export function getClientSurface(): string {
 
 /**
  * Build a surface key that includes the model name.
- * Format: "surface/model" (e.g., "cli/claude-sonnet")
+ * Format: "surface/model" (e.g., "cli/codepilot-sonnet")
  */
 export function buildSurfaceKey(surface: string, model: ModelName): string {
   return `${surface}/${getCanonicalName(model)}`
@@ -276,12 +276,12 @@ function computeFileModificationState(
   const normalizedPath = normalizeFilePath(filePath)
 
   try {
-    // Calculate Claude's character contribution
-    let claudeContribution: number
+    // Calculate CodePilot's character contribution
+    let contribution: number
 
     if (oldContent === '' || newContent === '') {
       // New file or full deletion - contribution is the content length
-      claudeContribution =
+      contribution =
         oldContent === '' ? newContent.length : oldContent.length
     } else {
       // Find actual changed region via common prefix/suffix matching.
@@ -305,16 +305,16 @@ function computeFileModificationState(
       }
       const oldChangedLen = oldContent.length - prefixEnd - suffixLen
       const newChangedLen = newContent.length - prefixEnd - suffixLen
-      claudeContribution = Math.max(oldChangedLen, newChangedLen)
+      contribution = Math.max(oldChangedLen, newChangedLen)
     }
 
     // Get current file state if it exists
     const existingState = existingFileStates.get(normalizedPath)
-    const existingContribution = existingState?.claudeContribution ?? 0
+    const existingContribution = existingState?.contribution ?? 0
 
     return {
       contentHash: computeContentHash(newContent),
-      claudeContribution: existingContribution + claudeContribution,
+      contribution: existingContribution + contribution,
       mtime,
     }
   } catch (error) {
@@ -340,7 +340,7 @@ export async function getFileMtime(filePath: string): Promise<number> {
 }
 
 /**
- * Track a file modification by Claude.
+ * Track a file modification by CodePilot.
  * Called after Edit/Write tool completes.
  */
 export function trackFileModification(
@@ -367,7 +367,7 @@ export function trackFileModification(
   newFileStates.set(normalizedPath, newFileState)
 
   logForDebugging(
-    `Attribution: Tracked ${newFileState.claudeContribution} chars for ${normalizedPath}`,
+    `Attribution: Tracked ${newFileState.contribution} chars for ${normalizedPath}`,
   )
 
   return {
@@ -377,8 +377,8 @@ export function trackFileModification(
 }
 
 /**
- * Track a file creation by Claude (e.g., via bash command).
- * Used when Claude creates a new file through a non-tracked mechanism.
+ * Track a file creation by CodePilot (e.g., via bash command).
+ * Used when CodePilot creates a new file through a non-tracked mechanism.
  */
 export function trackFileCreation(
   state: AttributionState,
@@ -391,8 +391,8 @@ export function trackFileCreation(
 }
 
 /**
- * Track a file deletion by Claude (e.g., via bash rm command).
- * Used when Claude deletes a file through a non-tracked mechanism.
+ * Track a file deletion by CodePilot (e.g., via bash rm command).
+ * Used when CodePilot deletes a file through a non-tracked mechanism.
  */
 export function trackFileDeletion(
   state: AttributionState,
@@ -401,12 +401,12 @@ export function trackFileDeletion(
 ): AttributionState {
   const normalizedPath = normalizeFilePath(filePath)
   const existingState = state.fileStates.get(normalizedPath)
-  const existingContribution = existingState?.claudeContribution ?? 0
+  const existingContribution = existingState?.contribution ?? 0
   const deletedChars = oldContent.length
 
   const newFileState: FileAttributionState = {
     contentHash: '', // Empty hash for deleted files
-    claudeContribution: existingContribution + deletedChars,
+    contribution: existingContribution + deletedChars,
     mtime: Date.now(),
   }
 
@@ -414,7 +414,7 @@ export function trackFileDeletion(
   newFileStates.set(normalizedPath, newFileState)
 
   logForDebugging(
-    `Attribution: Tracked deletion of ${normalizedPath} (${deletedChars} chars removed, total contribution: ${newFileState.claudeContribution})`,
+    `Attribution: Tracked deletion of ${normalizedPath} (${deletedChars} chars removed, total contribution: ${newFileState.contribution})`,
   )
 
   return {
@@ -448,12 +448,12 @@ export function trackBulkFileChanges(
     if (change.type === 'deleted') {
       const normalizedPath = normalizeFilePath(change.path)
       const existingState = newFileStates.get(normalizedPath)
-      const existingContribution = existingState?.claudeContribution ?? 0
+      const existingContribution = existingState?.contribution ?? 0
       const deletedChars = change.oldContent.length
 
       newFileStates.set(normalizedPath, {
         contentHash: '',
-        claudeContribution: existingContribution + deletedChars,
+        contribution: existingContribution + deletedChars,
         mtime,
       })
 
@@ -473,7 +473,7 @@ export function trackBulkFileChanges(
         newFileStates.set(normalizedPath, newFileState)
 
         logForDebugging(
-          `Attribution: Tracked ${newFileState.claudeContribution} chars for ${normalizedPath}`,
+          `Attribution: Tracked ${newFileState.contribution} chars for ${normalizedPath}`,
         )
       }
     }
@@ -501,7 +501,7 @@ export async function calculateCommitAttribution(
   const surfaces = new Set<string>()
   const surfaceCounts: Record<string, number> = {}
 
-  let totalClaudeChars = 0
+  let totalCodePilotChars = 0
   let totalHumanChars = 0
 
   // Merge file states from all sessions
@@ -548,8 +548,8 @@ export async function calculateCommitAttribution(
       if (existing) {
         mergedFileStates.set(path, {
           ...fileState,
-          claudeContribution:
-            existing.claudeContribution + fileState.claudeContribution,
+          contribution:
+            existing.contribution + fileState.contribution,
         })
       } else {
         mergedFileStates.set(path, fileState)
@@ -572,7 +572,7 @@ export async function calculateCommitAttribution(
       // Get the surface for this file
       const fileSurface = states[0]!.surface
 
-      let claudeChars = 0
+      let promptChars = 0
       let humanChars = 0
 
       // Check if file was deleted
@@ -581,8 +581,8 @@ export async function calculateCommitAttribution(
       if (deleted) {
         // File was deleted
         if (fileState) {
-          // Claude deleted this file (tracked deletion)
-          claudeChars = fileState.claudeContribution
+          // CodePilot deleted this file (tracked deletion)
+          promptChars = fileState.contribution
           humanChars = 0
         } else {
           // Human deleted this file (untracked deletion)
@@ -599,14 +599,14 @@ export async function calculateCommitAttribution(
 
           if (fileState) {
             // We have tracked modifications for this file
-            claudeChars = fileState.claudeContribution
+            promptChars = fileState.contribution
             humanChars = 0
           } else if (baseline) {
             // File was modified but not tracked - human modification
             const diffSize = await getGitDiffSize(file)
             humanChars = diffSize > 0 ? diffSize : stats.size
           } else {
-            // New file not created by Claude
+            // New file not created by CodePilot
             humanChars = stats.size
           }
         } catch {
@@ -616,16 +616,16 @@ export async function calculateCommitAttribution(
       }
 
       // Ensure non-negative values
-      claudeChars = Math.max(0, claudeChars)
+      promptChars = Math.max(0, promptChars)
       humanChars = Math.max(0, humanChars)
 
-      const total = claudeChars + humanChars
-      const percent = total > 0 ? Math.round((claudeChars / total) * 100) : 0
+      const total = promptChars + humanChars
+      const percent = total > 0 ? Math.round((promptChars / total) * 100) : 0
 
       return {
         type: 'file' as const,
         file,
-        claudeChars,
+        promptChars,
         humanChars,
         percent,
         surface: fileSurface,
@@ -643,39 +643,39 @@ export async function calculateCommitAttribution(
     }
 
     files[result.file] = {
-      claudeChars: result.claudeChars,
+      promptChars: result.promptChars,
       humanChars: result.humanChars,
       percent: result.percent,
       surface: result.surface,
     }
 
-    totalClaudeChars += result.claudeChars
+    totalCodePilotChars += result.promptChars
     totalHumanChars += result.humanChars
 
     surfaceCounts[result.surface] =
-      (surfaceCounts[result.surface] ?? 0) + result.claudeChars
+      (surfaceCounts[result.surface] ?? 0) + result.promptChars
   }
 
-  const totalChars = totalClaudeChars + totalHumanChars
-  const claudePercent =
-    totalChars > 0 ? Math.round((totalClaudeChars / totalChars) * 100) : 0
+  const totalChars = totalCodePilotChars + totalHumanChars
+  const accentPercent =
+    totalChars > 0 ? Math.round((totalCodePilotChars / totalChars) * 100) : 0
 
   // Calculate surface breakdown (percentage of total content per surface)
   const surfaceBreakdown: Record<
     string,
-    { claudeChars: number; percent: number }
+    { promptChars: number; percent: number }
   > = {}
   for (const [surface, chars] of Object.entries(surfaceCounts)) {
     // Calculate what percentage of TOTAL content this surface contributed
     const percent = totalChars > 0 ? Math.round((chars / totalChars) * 100) : 0
-    surfaceBreakdown[surface] = { claudeChars: chars, percent }
+    surfaceBreakdown[surface] = { promptChars: chars, percent }
   }
 
   return {
     version: 1,
     summary: {
-      claudePercent,
-      claudeChars: totalClaudeChars,
+      accentPercent,
+      promptChars: totalCodePilotChars,
       humanChars: totalHumanChars,
       surfaces: Array.from(surfaces),
     },

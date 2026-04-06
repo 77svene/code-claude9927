@@ -15,7 +15,7 @@ const desktop = {
   name: 'desktop',
   aliases: ['app'],
   description: 'Continue the current session in CodePilot Desktop',
-  availability: ['claude-ai'],
+  availability: ['codepilot-ai'],
   isEnabled: isSupportedPlatform,
   get isHidden() {
     return !isSupportedPlatform()

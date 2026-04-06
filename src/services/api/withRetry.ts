@@ -1,10 +1,10 @@
 import { feature } from 'bun:bundle'
-import type Anthropic from '@anthropic-ai/sdk'
+import type { CodePilot } from 'src/types/contentBlocks.js'
 import {
   APIConnectionError,
   APIError,
   APIUserAbortError,
-} from '@anthropic-ai/sdk'
+} from 'src/types/contentBlocks.js'
 import type { QuerySource } from 'src/constants/querySource.js'
 import type { SystemAPIErrorMessage } from 'src/types/message.js'
 import { isAwsCredentialsProviderError } from 'src/utils/aws.js'
@@ -16,9 +16,9 @@ import {
   clearApiKeyHelperCache,
   clearAwsCredentialsCache,
   clearGcpCredentialsCache,
-  getClaudeAIOAuthTokens,
+  getOAuthTokens,
   handleOAuth401Error,
-  isClaudeAISubscriber,
+  isSubscriber,
   isEnterpriseSubscriber,
 } from '../../utils/auth.js'
 import { isEnvTruthy } from '../../utils/envUtils.js'
@@ -168,9 +168,9 @@ export class FallbackTriggeredError extends Error {
 }
 
 export async function* withRetry<T>(
-  getClient: () => Promise<Anthropic>,
+  getClient: () => Promise<CodePilot>,
   operation: (
-    client: Anthropic,
+    client: CodePilot,
     attempt: number,
     context: RetryContext,
   ) => Promise<T>,
@@ -182,7 +182,7 @@ export async function* withRetry<T>(
     thinkingConfig: options.thinkingConfig,
     ...(isFastModeEnabled() && { fastMode: options.fastMode }),
   }
-  let client: Anthropic | null = null
+  let client: CodePilot | null = null
   let consecutive529Errors = options.initialConsecutive529Errors ?? 0
   let lastError: unknown
   let persistentAttempt = 0
@@ -242,7 +242,7 @@ export async function* withRetry<T>(
           (lastError instanceof APIError && lastError.status === 401) ||
           isOAuthTokenRevokedError(lastError)
         ) {
-          const failedAccessToken = getClaudeAIOAuthTokens()?.accessToken
+          const failedAccessToken = getOAuthTokens()?.accessToken
           if (failedAccessToken) {
             await handleOAuth401Error(failedAccessToken)
           }
@@ -273,7 +273,7 @@ export async function* withRetry<T>(
         // If the 429 is specifically because extra usage (overage) is not
         // available, permanently disable fast mode with a specific message.
         const overageReason = error.headers?.get(
-          'anthropic-ratelimit-unified-overage-disabled-reason',
+          'codepilot-ratelimit-unified-overage-disabled-reason',
         )
         if (overageReason !== null && overageReason !== undefined) {
           handleFastModeOverageRejection(overageReason)
@@ -329,7 +329,7 @@ export async function* withRetry<T>(
         // If FALLBACK_FOR_ALL_PRIMARY_MODELS is not set, fall through only if the primary model is a non-custom Opus model.
         // TODO: Revisit if the isNonCustomOpusModel check should still exist, or if isNonCustomOpusModel is a stale artifact of when CodePilot was hardcoded on Opus.
         (process.env.FALLBACK_FOR_ALL_PRIMARY_MODELS ||
-          (!isClaudeAISubscriber() && isNonCustomOpusModel(options.model)))
+          (!isSubscriber() && isNonCustomOpusModel(options.model)))
       ) {
         consecutive529Errors++
         if (consecutive529Errors >= MAX_529_RETRIES) {
@@ -736,7 +736,7 @@ function shouldRetry(error: APIError): boolean {
   // Enterprise users can retry because they typically use PAYG instead of rate limits.
   if (
     shouldRetryHeader === 'true' &&
-    (!isClaudeAISubscriber() || isEnterpriseSubscriber())
+    (!isSubscriber() || isEnterpriseSubscriber())
   ) {
     return true
   }
@@ -762,10 +762,10 @@ function shouldRetry(error: APIError): boolean {
   // Retry on lock timeouts.
   if (error.status === 409) return true
 
-  // Retry on rate limits, but not for ClaudeAI Subscription users
+  // Retry on rate limits, but not for CodePilotAI Subscription users
   // Enterprise users can retry because they typically use PAYG instead of rate limits
   if (error.status === 429) {
-    return !isClaudeAISubscriber() || isEnterpriseSubscriber()
+    return !isSubscriber() || isEnterpriseSubscriber()
   }
 
   // Clear API key cache on 401 and allow retry.
@@ -812,7 +812,7 @@ function getRetryAfterMs(error: APIError): number | null {
 }
 
 function getRateLimitResetDelayMs(error: APIError): number | null {
-  const resetHeader = error.headers?.get?.('anthropic-ratelimit-unified-reset')
+  const resetHeader = error.headers?.get?.('codepilot-ratelimit-unified-reset')
   if (!resetHeader) return null
   const resetUnixSec = Number(resetHeader)
   if (!Number.isFinite(resetUnixSec)) return null
