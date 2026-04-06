@@ -38,7 +38,7 @@ Use AskUserQuestion to find out what the user wants:
 
 - "Also set up skills and hooks?"
   Options: "Skills + hooks" | "Skills only" | "Hooks only" | "Neither, just CLAUDE.md"
-  Description for skills: "On-demand capabilities you or Claude invoke with \`/skill-name\` — good for repeatable workflows and reference knowledge."
+  Description for skills: "On-demand capabilities you or DevForge invoke with \`/skill-name\` — good for repeatable workflows and reference knowledge."
   Description for hooks: "Deterministic shell commands that run on tool events (e.g., format after every edit). Claude can't skip them."
 
 ## Phase 2: Explore the codebase
@@ -72,9 +72,9 @@ If the user chose personal CLAUDE.local.md or both: ask about them, not the code
 
 **Synthesize a proposal from Phase 2 findings** — e.g., format-on-edit if a formatter exists, a \`/verify\` skill if tests exist, a CLAUDE.md note for anything from the gap-fill answers that's a guideline rather than a workflow. For each, pick the artifact type that fits, **constrained by the Phase 1 skills+hooks choice**:
 
-  - **Hook** (stricter) — deterministic shell command on a tool event; Claude can't skip it. Fits mechanical, fast, per-edit steps: formatting, linting, running a quick test on the changed file.
-  - **Skill** (on-demand) — you or Claude invoke \`/skill-name\` when you want it. Fits workflows that don't belong on every edit: deep verification, session reports, deploys.
-  - **CLAUDE.md note** (looser) — influences Claude's behavior but not enforced. Fits communication/thinking preferences: "plan before coding", "be terse", "explain tradeoffs".
+  - **Hook** (stricter) — deterministic shell command on a tool event; DevForge can't skip it. Fits mechanical, fast, per-edit steps: formatting, linting, running a quick test on the changed file.
+  - **Skill** (on-demand) — you or DevForge invoke \`/skill-name\` when you want it. Fits workflows that don't belong on every edit: deep verification, session reports, deploys.
+  - **CLAUDE.md note** (looser) — influences DevForge's behavior but not enforced. Fits communication/thinking preferences: "plan before coding", "be terse", "explain tradeoffs".
 
   **Respect Phase 1's skills+hooks choice as a hard filter**: if the user picked "Skills only", downgrade any hook you'd suggest to a skill or a CLAUDE.md note. If "Hooks only", downgrade skills to hooks (where mechanically possible) or notes. If "Neither", everything becomes a CLAUDE.md note. Never propose an artifact type the user didn't opt into.
 
@@ -94,12 +94,12 @@ If the user chose personal CLAUDE.local.md or both: ask about them, not the code
 
 ## Phase 4: Write CLAUDE.md (if user chose project or both)
 
-Write a minimal CLAUDE.md at the project root. Every line must pass this test: "Would removing this cause Claude to make mistakes?" If no, cut it.
+Write a minimal CLAUDE.md at the project root. Every line must pass this test: "Would removing this cause DevForge to make mistakes?" If no, cut it.
 
-**Consume \`note\` entries from the Phase 3 preference queue whose target is CLAUDE.md** (team-level notes) — add each as a concise line in the most relevant section. These are the behaviors the user wants Claude to follow but didn't need guaranteed (e.g., "propose a plan before implementing", "explain the tradeoffs when refactoring"). Leave personal-targeted notes for Phase 5.
+**Consume \`note\` entries from the Phase 3 preference queue whose target is CLAUDE.md** (team-level notes) — add each as a concise line in the most relevant section. These are the behaviors the user wants DevForge to follow but didn't need guaranteed (e.g., "propose a plan before implementing", "explain the tradeoffs when refactoring"). Leave personal-targeted notes for Phase 5.
 
 Include:
-- Build/test/lint commands Claude can't guess (non-standard scripts, flags, or sequences)
+- Build/test/lint commands DevForge can't guess (non-standard scripts, flags, or sequences)
 - Code style rules that DIFFER from language defaults (e.g., "prefer type over interface")
 - Testing instructions and quirks (e.g., "run single test with: pytest -k 'test_name'")
 - Repo etiquette (branch naming, PR conventions, commit style)

@@ -204,7 +204,7 @@ function ClaudeInChromeMenu(t0) {
   }
   let t7;
   if ($[21] !== isWSL) {
-    t7 = isWSL && <Text color="error">Claude in Chrome is not supported in WSL at this time.</Text>;
+    t7 = isWSL && <Text color="error">DevForge in Chrome is not supported in WSL at this time.</Text>;
     $[21] = isWSL;
     $[22] = t7;
   } else {
@@ -212,7 +212,7 @@ function ClaudeInChromeMenu(t0) {
   }
   let t8;
   if ($[23] !== isClaudeAISubscriber) {
-    t8 = true && !isClaudeAISubscriber && <Text color="error">Claude in Chrome requires a claude.ai subscription.</Text>;
+    t8 = true && !isClaudeAISubscriber && <Text color="error">DevForge in Chrome requires a DevForge subscription.</Text>;
     $[23] = isClaudeAISubscriber;
     $[24] = t8;
   } else {
@@ -251,7 +251,7 @@ function ClaudeInChromeMenu(t0) {
   }
   let t12;
   if ($[38] !== t11 || $[39] !== t5) {
-    t12 = <Dialog title="Claude in Chrome (Beta)" onCancel={t5} color="chromeYellow">{t11}</Dialog>;
+    t12 = <Dialog title="DevForge in Chrome (Beta)" onCancel={t5} color="chromeYellow">{t11}</Dialog>;
     $[38] = t11;
     $[39] = t5;
     $[40] = t12;
