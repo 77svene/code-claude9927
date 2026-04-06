@@ -6,7 +6,8 @@
  */
 
 import { randomUUID } from 'crypto'
-import type { Tool, ToolPermissionContext, Tools, QueryChainTracking } from '../../Tool.js'
+import { getEmptyToolPermissionContext } from '../../Tool.js'
+import type { ToolPermissionContext, Tools, QueryChainTracking } from '../../Tool.js'
 import type {
   AssistantMessage,
   Message,
@@ -15,37 +16,20 @@ import type {
   UserMessage,
 } from '../../types/message.js'
 import { toolToAPISchema, type OpenAITool } from '../../utils/api.js'
-import type { SystemPrompt } from '../../utils/systemPromptType.js'
+import { asSystemPrompt, type SystemPrompt } from '../../utils/systemPromptType.js'
 import type { ThinkingConfig } from '../../utils/thinking.js'
 import type { QuerySource } from '../../constants/querySource.js'
 import type { AgentDefinition } from '../../tools/AgentTool/loadAgentsDir.js'
 import type { Notification } from '../../context/notifications.js'
 import type { AgentId } from '../../types/ids.js'
-import { getCodePilotClient, fetchCompletion, CLIENT_REQUEST_ID_HEADER } from './client.js'
-import { EMPTY_USAGE, type NonNullableUsage } from './emptyUsage.js'
-import type { GlobalCacheStrategy } from './logging.js'
-import {
-  logAPIQuery,
-  logAPISuccessAndDuration,
-  logAPIError,
-} from './logging.js'
-import {
-  createAssistantAPIErrorMessage,
-  normalizeContentFromAPI,
-  normalizeMessagesForAPI,
-} from '../../utils/messages.js'
-import {
-  normalizeModelStringForAPI,
-} from '../../utils/model/model.js'
+import { getCodePilotClient, fetchCompletion } from './client.js'
+import { EMPTY_USAGE } from './emptyUsage.js'
+import type { NonNullableUsage } from '../../entrypoints/sdk/sdkUtilityTypes.js'
+import { createAssistantAPIErrorMessage, createUserMessage } from '../../utils/messages.js'
+import { normalizeModelStringForAPI, getSmallFastModel } from '../../utils/model/model.js'
 import { logForDebugging } from '../../utils/debug.js'
-import { errorMessage } from '../../utils/errors.js'
-import { logError } from '../../utils/log.js'
 import { getModelMaxOutputTokens } from '../../utils/context.js'
-import {
-  type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS,
-  logEvent,
-} from '../analytics/index.js'
-import { addToTotalSessionCost } from '../../cost-tracker.js'
+import { withVCR } from '../vcr.js'
 
 // Re-export for consumers
 export { EMPTY_USAGE }
@@ -283,13 +267,7 @@ function convertToOpenAIMessages(
       if (typeof content === 'string') {
         result.push({ role: 'user', content })
       } else if (Array.isArray(content)) {
-        // Extract text from content blocks
-        const textParts = content
-          .filter((b: any) => b.type === 'text')
-          .map((b: any) => b.text)
-          .join('\n')
-
-        // Extract tool results
+        // Emit tool results first (role: 'tool'), then any text as user message
         const toolResults = content.filter((b: any) => b.type === 'tool_result')
         for (const tr of toolResults) {
           const resultContent =
@@ -308,9 +286,11 @@ function convertToOpenAIMessages(
           })
         }
 
-        if (textParts && toolResults.length === 0) {
-          result.push({ role: 'user', content: textParts })
-        } else if (textParts && toolResults.length > 0) {
+        const textParts = content
+          .filter((b: any) => b.type === 'text')
+          .map((b: any) => b.text)
+          .join('\n')
+        if (textParts) {
           result.push({ role: 'user', content: textParts })
         }
       }
@@ -403,6 +383,7 @@ export function addCacheBreakpoints(
 
 export function buildSystemPromptBlocks(
   systemPrompt: SystemPrompt,
+  _enablePromptCaching?: boolean,
   _options?: unknown,
 ): Array<{ type: string; text: string }> {
   const text = systemPrompt.filter(Boolean).join('\n\n')
@@ -531,9 +512,9 @@ async function* queryModel(
     }
     const errMsg = err instanceof Error ? err.message : String(err)
     logForDebugging(`[API] Connection error: ${errMsg}`)
-    const errorAssistant = createAssistantAPIErrorMessage(
-      `Connection error: ${errMsg}. Is your local model server running at ${config.baseURL}?`,
-    )
+    const errorAssistant = createAssistantAPIErrorMessage({
+      content: `Connection error: ${errMsg}. Is your local model server running at ${config.baseURL}?`,
+    })
     yield errorAssistant
     return
   }
@@ -541,9 +522,9 @@ async function* queryModel(
   if (!response.ok) {
     const errText = await response.text().catch(() => 'Unknown error')
     logForDebugging(`[API] HTTP ${response.status}: ${errText}`)
-    const errorAssistant = createAssistantAPIErrorMessage(
-      `API error (HTTP ${response.status}): ${errText}`,
-    )
+    const errorAssistant = createAssistantAPIErrorMessage({
+      content: `API error (HTTP ${response.status}): ${errText}`,
+    })
     yield errorAssistant
     return
   }
@@ -701,83 +682,120 @@ export async function* queryModelWithStreaming({
   yield* queryModel(messages, systemPrompt, thinkingConfig, tools, signal, options)
 }
 
+// eslint-disable-next-line require-yield
 export async function* executeNonStreamingRequest(
   _clientOptions: {
     model: string
     fetchOverride?: unknown
     source?: string
   },
-  _params: unknown,
-  _signal: AbortSignal,
+  _params?: unknown,
+  _signal?: AbortSignal,
   _retryOptions?: unknown,
-): AsyncGenerator<SystemAPIErrorMessage, unknown> {
-  // Stub — local models always use streaming
-  return undefined as unknown
+): AsyncGenerator<SystemAPIErrorMessage, undefined> {
+  // Stub — local models always use streaming; non-streaming fallback not implemented
+  return undefined
 }
 
 // ── Convenience query functions ───────────────────────────────────────────────
 
+type HaikuOptions = Omit<Options, 'model' | 'getToolPermissionContext'>
+
 export async function queryHaiku({
-  messages,
-  systemPrompt,
-  tools = [],
+  systemPrompt = asSystemPrompt([]),
+  userPrompt,
+  outputFormat,
   signal,
   options,
 }: {
-  messages: Message[]
-  systemPrompt: string[]
-  tools?: Tools
+  systemPrompt?: SystemPrompt
+  userPrompt: string
+  outputFormat?: unknown
   signal: AbortSignal
-  options: Pick<
-    Options,
-    'getToolPermissionContext' | 'querySource' | 'agents' | 'allowedAgentTypes' | 'mcpTools' | 'hasAppendSystemPrompt'
-  > & { isNonInteractiveSession?: boolean }
+  options: HaikuOptions
 }): Promise<AssistantMessage> {
   const config = getCodePilotClient()
-  return queryModelWithoutStreaming({
-    messages,
-    systemPrompt,
-    thinkingConfig: { type: 'disabled' },
-    tools,
-    signal,
-    options: {
-      ...options,
-      model: config.model,
-      isNonInteractiveSession: options.isNonInteractiveSession ?? false,
-      hasAppendSystemPrompt: options.hasAppendSystemPrompt ?? false,
-    } as Options,
-  })
+  const messages: Message[] = [
+    createUserMessage({ content: userPrompt }),
+  ]
+  const result = await withVCR(
+    [
+      createUserMessage({ content: systemPrompt.map(t => ({ type: 'text', text: t })) }),
+      createUserMessage({ content: userPrompt }),
+    ],
+    async () => {
+      const r = await queryModelWithoutStreaming({
+        messages,
+        systemPrompt,
+        thinkingConfig: { type: 'disabled' },
+        tools: [],
+        signal,
+        options: {
+          ...options,
+          model: config.model || getSmallFastModel(),
+          enablePromptCaching: options.enablePromptCaching ?? false,
+          outputFormat,
+          isNonInteractiveSession: options.isNonInteractiveSession ?? false,
+          hasAppendSystemPrompt: options.hasAppendSystemPrompt ?? false,
+          mcpTools: options.mcpTools ?? [],
+          agents: options.agents ?? [],
+          querySource: options.querySource,
+          async getToolPermissionContext() {
+            return getEmptyToolPermissionContext()
+          },
+        } as Options,
+      })
+      return [r]
+    },
+  )
+  return result[0]! as AssistantMessage
 }
 
+type QueryWithModelOptions = Omit<Options, 'getToolPermissionContext'>
+
 export async function queryWithModel({
-  messages,
-  systemPrompt,
-  tools = [],
+  systemPrompt = asSystemPrompt([]),
+  userPrompt,
+  outputFormat,
   signal,
-  model,
   options,
 }: {
-  messages: Message[]
-  systemPrompt: string[]
-  tools?: Tools
+  systemPrompt?: SystemPrompt
+  userPrompt: string
+  outputFormat?: unknown
   signal: AbortSignal
-  model: string
-  options: Pick<
-    Options,
-    'getToolPermissionContext' | 'querySource' | 'agents' | 'allowedAgentTypes' | 'mcpTools' | 'hasAppendSystemPrompt'
-  > & { isNonInteractiveSession?: boolean }
+  options: QueryWithModelOptions
 }): Promise<AssistantMessage> {
-  return queryModelWithoutStreaming({
-    messages,
-    systemPrompt,
-    thinkingConfig: { type: 'disabled' },
-    tools,
-    signal,
-    options: {
-      ...options,
-      model,
-      isNonInteractiveSession: options.isNonInteractiveSession ?? false,
-      hasAppendSystemPrompt: options.hasAppendSystemPrompt ?? false,
-    } as Options,
-  })
+  const messages: Message[] = [
+    createUserMessage({ content: userPrompt }),
+  ]
+  const result = await withVCR(
+    [
+      createUserMessage({ content: systemPrompt.map(t => ({ type: 'text', text: t })) }),
+      createUserMessage({ content: userPrompt }),
+    ],
+    async () => {
+      const r = await queryModelWithoutStreaming({
+        messages,
+        systemPrompt,
+        thinkingConfig: { type: 'disabled' },
+        tools: [],
+        signal,
+        options: {
+          ...options,
+          enablePromptCaching: options.enablePromptCaching ?? false,
+          outputFormat,
+          isNonInteractiveSession: options.isNonInteractiveSession ?? false,
+          hasAppendSystemPrompt: options.hasAppendSystemPrompt ?? false,
+          mcpTools: options.mcpTools ?? [],
+          agents: options.agents ?? [],
+          async getToolPermissionContext() {
+            return getEmptyToolPermissionContext()
+          },
+        } as Options,
+      })
+      return [r]
+    },
+  )
+  return result[0]! as AssistantMessage
 }
