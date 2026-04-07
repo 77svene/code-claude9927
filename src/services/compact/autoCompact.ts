@@ -13,7 +13,7 @@ import type { CacheSafeParams } from '../../utils/forkedAgent.js'
 import { logError } from '../../utils/log.js'
 import { tokenCountWithEstimation } from '../../utils/tokens.js'
 import { getFeatureValue_CACHED_MAY_BE_STALE } from '../analytics/growthbook.js'
-import { getMaxOutputTokensForModel } from '../api/claude.js'
+import { getMaxOutputTokensForModel } from '../api/completion.js'
 import { notifyCompaction } from '../api/promptCacheBreakDetection.js'
 import { setLastSummarizedMessageId } from '../SessionMemory/sessionMemoryUtils.js'
 import {
@@ -25,9 +25,9 @@ import {
 import { runPostCompactCleanup } from './postCompactCleanup.js'
 import { trySessionMemoryCompaction } from './sessionMemoryCompact.js'
 
-// Reserve this many tokens for output during compaction
-// Based on p99.99 of compact summary output being 17,387 tokens.
-const MAX_OUTPUT_TOKENS_FOR_SUMMARY = 20_000
+// Reserve this many tokens for output during compaction.
+// Reduced from 20K to match small model output limits (4K max).
+const MAX_OUTPUT_TOKENS_FOR_SUMMARY = 4_000
 
 // Returns the context window size minus the max output tokens for the model
 export function getEffectiveContextWindowSize(model: string): number {
@@ -37,7 +37,7 @@ export function getEffectiveContextWindowSize(model: string): number {
   )
   let contextWindow = getContextWindowForModel(model, getSdkBetas())
 
-  const autoCompactWindow = process.env.CLAUDE_CODE_AUTO_COMPACT_WINDOW
+  const autoCompactWindow = process.env.CODEPILOT_AUTO_COMPACT_WINDOW
   if (autoCompactWindow) {
     const parsed = parseInt(autoCompactWindow, 10)
     if (!isNaN(parsed) && parsed > 0) {
@@ -59,10 +59,13 @@ export type AutoCompactTrackingState = {
   consecutiveFailures?: number
 }
 
-export const AUTOCOMPACT_BUFFER_TOKENS = 13_000
-export const WARNING_THRESHOLD_BUFFER_TOKENS = 20_000
-export const ERROR_THRESHOLD_BUFFER_TOKENS = 20_000
-export const MANUAL_COMPACT_BUFFER_TOKENS = 3_000
+// Tuned for 32K context window (small local models).
+// Original values (13K, 20K, 20K, 3K) assumed 200K+ context and caused
+// negative warning thresholds with 32K.
+export const AUTOCOMPACT_BUFFER_TOKENS = 4_000
+export const WARNING_THRESHOLD_BUFFER_TOKENS = 3_000
+export const ERROR_THRESHOLD_BUFFER_TOKENS = 3_000
+export const MANUAL_COMPACT_BUFFER_TOKENS = 1_000
 
 // Stop trying autocompact after this many consecutive failures.
 // BQ 2026-03-10: 1,279 sessions had 50+ consecutive failures (up to 3,272)
@@ -76,7 +79,7 @@ export function getAutoCompactThreshold(model: string): number {
     effectiveContextWindow - AUTOCOMPACT_BUFFER_TOKENS
 
   // Override for easier testing of autocompact
-  const envPercent = process.env.CLAUDE_AUTOCOMPACT_PCT_OVERRIDE
+  const envPercent = process.env.codepilot_AUTOCOMPACT_PCT_OVERRIDE
   if (envPercent) {
     const parsed = parseFloat(envPercent)
     if (!isNaN(parsed) && parsed > 0 && parsed <= 100) {
@@ -124,7 +127,7 @@ export function calculateTokenWarningState(
     actualContextWindow - MANUAL_COMPACT_BUFFER_TOKENS
 
   // Allow override for testing
-  const blockingLimitOverride = process.env.CLAUDE_CODE_BLOCKING_LIMIT_OVERRIDE
+  const blockingLimitOverride = process.env.CODEPILOT_BLOCKING_LIMIT_OVERRIDE
   const parsedOverride = blockingLimitOverride
     ? parseInt(blockingLimitOverride, 10)
     : NaN
@@ -209,7 +212,7 @@ export async function shouldAutoCompact(
   // sessionMemory + manual /compact working.
   //
   // Consult isContextCollapseEnabled (not the raw gate) so the
-  // CLAUDE_CONTEXT_COLLAPSE env override is honored here too. require()
+  // codepilot_CONTEXT_COLLAPSE env override is honored here too. require()
   // inside the block breaks the init-time cycle (this file exports
   // getEffectiveContextWindowSize which collapse's index imports).
   if (feature('CONTEXT_COLLAPSE')) {

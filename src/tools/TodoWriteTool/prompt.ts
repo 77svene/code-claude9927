@@ -1,6 +1,17 @@
+import { isEnvTruthy } from '../../utils/envUtils.js'
 import { FILE_EDIT_TOOL_NAME } from '../FileEditTool/constants.js'
 
-export const PROMPT = `Use this tool to create and manage a structured task list for your current coding session. This helps you track progress, organize complex tasks, and demonstrate thoroughness to the user.
+// Slim prompt for local models (~200 tokens instead of ~2400)
+const SLIM_PROMPT = `Track tasks for multi-step work.
+
+Use for 3+ step tasks. Skip for simple one-step tasks.
+
+States: pending, in_progress, completed.
+- Only one task in_progress at a time.
+- Mark tasks done immediately after finishing.
+- Each todo needs: content (imperative, e.g. "Run tests"), activeForm (present continuous, e.g. "Running tests"), status.`
+
+const FULL_PROMPT = `Use this tool to create and manage a structured task list for your current coding session. This helps you track progress, organize complex tasks, and demonstrate thoroughness to the user.
 It also helps the user understand the progress of the task and overall progress of their requests.
 
 ## When to Use This Tool
@@ -179,6 +190,8 @@ The assistant did not use the todo list because this is a single command executi
 
 When in doubt, use this tool. Being proactive with task management demonstrates attentiveness and ensures you complete all requirements successfully.
 `
+
+export const PROMPT = isEnvTruthy(process.env.CODEPILOT_ALL_TOOLS) ? FULL_PROMPT : SLIM_PROMPT
 
 export const DESCRIPTION =
   'Update the todo list for the current session. To be used proactively and often to track progress and pending tasks. Make sure that at least one task is in_progress at all times. Always provide both content (imperative) and activeForm (present continuous) for each task.'

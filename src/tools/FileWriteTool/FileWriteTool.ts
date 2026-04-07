@@ -336,14 +336,14 @@ export const FileWriteTool = buildTool({
       limit: undefined,
     })
 
-    // Log when writing to CLAUDE.md
-    if (fullFilePath.endsWith(`${sep}CLAUDE.md`)) {
-      logEvent('tengu_write_claudemd', {})
+    // Log when writing to codepilot.md
+    if (fullFilePath.endsWith(`${sep}codepilot.md`)) {
+      logEvent('tengu_write_configmd', {})
     }
 
     let gitDiff: ToolUseDiff | undefined
     if (
-      isEnvTruthy(process.env.CLAUDE_CODE_REMOTE) &&
+      isEnvTruthy(process.env.CODEPILOT_REMOTE) &&
       getFeatureValue_CACHED_MAY_BE_STALE('tengu_quartz_lantern', false)
     ) {
       const startTime = Date.now()
@@ -416,18 +416,19 @@ export const FileWriteTool = buildTool({
     }
   },
   mapToolResultToToolResultBlockParam({ filePath, type }, toolUseID) {
+    const verifyHint = '\nNext: read the file back to verify the content, then run tests or build if available.'
     switch (type) {
       case 'create':
         return {
           tool_use_id: toolUseID,
           type: 'tool_result',
-          content: `File created successfully at: ${filePath}`,
+          content: `File created successfully at: ${filePath}${verifyHint}`,
         }
       case 'update':
         return {
           tool_use_id: toolUseID,
           type: 'tool_result',
-          content: `The file ${filePath} has been updated successfully.`,
+          content: `The file ${filePath} has been updated successfully.${verifyHint}`,
         }
     }
   },

@@ -54,11 +54,11 @@ export function formatAgentLine(agent: AgentDefinition): string {
  * connect, /reload-plugins, or permission-mode changes mutate the list →
  * description changes → full tool-schema cache bust.
  *
- * Override with CLAUDE_CODE_AGENT_LIST_IN_MESSAGES=true/false for testing.
+ * Override with CODEPILOT_AGENT_LIST_IN_MESSAGES=true/false for testing.
  */
 export function shouldInjectAgentListInMessages(): boolean {
-  if (isEnvTruthy(process.env.CLAUDE_CODE_AGENT_LIST_IN_MESSAGES)) return true
-  if (isEnvDefinedFalsy(process.env.CLAUDE_CODE_AGENT_LIST_IN_MESSAGES))
+  if (isEnvTruthy(process.env.CODEPILOT_AGENT_LIST_IN_MESSAGES)) return true
+  if (isEnvDefinedFalsy(process.env.CODEPILOT_AGENT_LIST_IN_MESSAGES))
     return false
   return getFeatureValue_CACHED_MAY_BE_STALE('tengu_agent_list_attach', false)
 }
@@ -68,6 +68,26 @@ export async function getPrompt(
   isCoordinator?: boolean,
   allowedAgentTypes?: string[],
 ): Promise<string> {
+  // Local mode: drastically reduced prompt to save ~4K tokens.
+  if (!isEnvTruthy(process.env.CODEPILOT_ALL_TOOLS)) {
+    const effectiveAgents = allowedAgentTypes
+      ? agentDefinitions.filter(a => allowedAgentTypes.includes(a.agentType))
+      : agentDefinitions
+    const agentList = effectiveAgents.length > 0
+      ? effectiveAgents.map(a => `- ${a.agentType}: ${a.description || 'general purpose'}`).join('\n')
+      : '- general-purpose: General agent for research and multi-step tasks'
+    return `Launch a sub-agent to handle a task autonomously.
+
+Available agent types:
+${agentList}
+
+Usage:
+- Set subagent_type to pick an agent, or omit for general-purpose.
+- Give a complete task description in the prompt (the agent has no conversation context).
+- Use run_in_background=true for independent tasks.
+- The agent returns a single result message when done.`
+  }
+
   // Filter agents by allowed types when Agent(x,y) restricts which agents can be spawned
   const effectiveAgents = allowedAgentTypes
     ? agentDefinitions.filter(a => allowedAgentTypes.includes(a.agentType))
@@ -256,7 +276,7 @@ Usage notes:
 - Always include a short description (3-5 words) summarizing what the agent will do${concurrencyNote}
 - When the agent is done, it will return a single message back to you. The result returned by the agent is not visible to the user. To show the user the result, you should send a text message back to the user with a concise summary of the result.${
     // eslint-disable-next-line custom-rules/no-process-env-top-level
-    !isEnvTruthy(process.env.CLAUDE_CODE_DISABLE_BACKGROUND_TASKS) &&
+    !isEnvTruthy(process.env.CODEPILOT_DISABLE_BACKGROUND_TASKS) &&
     !isInProcessTeammate() &&
     !forkEnabled
       ? `
