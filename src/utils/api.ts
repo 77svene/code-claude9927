@@ -209,13 +209,11 @@ export function prependUserContext(
 
   return [
     createUserMessage({
-      content: `<system-reminder>\nAs you answer the user's questions, you can use the following context:\n${Object.entries(
+      content: `<system-reminder>\n${Object.entries(
         context,
       )
         .map(([key, value]) => `# ${key}\n${value}`)
-        .join('\n')}
-
-      IMPORTANT: this context may or may not be relevant to your tasks. You should not respond to this context unless it is highly relevant to your task.\n</system-reminder>\n`,
+        .join('\n')}\n</system-reminder>\n`,
       isMeta: true,
     }),
     ...messages,

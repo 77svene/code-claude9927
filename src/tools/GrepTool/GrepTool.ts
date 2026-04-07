@@ -53,7 +53,7 @@ const inputSchema = lazySchema(() =>
       .enum(['content', 'files_with_matches', 'count'])
       .optional()
       .describe(
-        'Output mode: "content" shows matching lines (supports -A/-B/-C context, -n line numbers, head_limit), "files_with_matches" shows file paths (supports head_limit), "count" shows match counts (supports head_limit). Defaults to "files_with_matches".',
+        '"content" = matching lines, "files_with_matches" = file paths (default), "count" = match counts.',
       ),
     '-B': semanticNumber(z.number().optional()).describe(
       'Number of lines to show before each match (rg -B). Requires output_mode: "content", ignored otherwise.',
@@ -78,10 +78,10 @@ const inputSchema = lazySchema(() =>
         'File type to search (rg --type). Common types: js, py, rust, go, java, etc. More efficient than include for standard file types.',
       ),
     head_limit: semanticNumber(z.number().optional()).describe(
-      'Limit output to first N lines/entries, equivalent to "| head -N". Works across all output modes: content (limits output lines), files_with_matches (limits file paths), count (limits count entries). Defaults to 250 when unspecified. Pass 0 for unlimited (use sparingly — large result sets waste context).',
+      'Limit output to first N entries. Defaults to 250. Pass 0 for unlimited.',
     ),
     offset: semanticNumber(z.number().optional()).describe(
-      'Skip first N lines/entries before applying head_limit, equivalent to "| tail -n +N | head -N". Works across all output modes. Defaults to 0.',
+      'Skip first N entries before applying head_limit. Defaults to 0.',
     ),
     multiline: semanticBoolean(z.boolean().optional()).describe(
       'Enable multiline mode where . matches newlines and patterns can span lines (rg -U --multiline-dotall). Default: false.',
