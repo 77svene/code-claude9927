@@ -205,10 +205,23 @@ export type ClientOptions = {
 }
 
 /**
- * Namespace placeholder for code that does `import type { CodePilot } from 'src/types/contentBlocks.js'`
- * and then references `CodePilot.Messages.MessageParam` etc.
+ * Namespace used by files that do `import type { CodePilot } from 'src/types/contentBlocks.js'`
+ * and then reference `CodePilot.Messages.MessageParam`, `CodePilot.Beta.Messages.BetaMessage`, etc.
  */
 export namespace CodePilot {
+  // Top-level type aliases (used as CodePilot.MessageParam, CodePilot.ContentBlock, etc.)
+  export type MessageParam = import('./contentBlocks.js').MessageParam
+  export type ContentBlock = import('./contentBlocks.js').ContentBlock
+  export type ContentBlockParam = import('./contentBlocks.js').ContentBlockParam
+  export type TextBlockParam = import('./contentBlocks.js').TextBlockParam
+  export type ImageBlockParam = import('./contentBlocks.js').ImageBlockParam
+  export type ToolUseBlockParam = import('./contentBlocks.js').ToolUseBlockParam
+  export type ToolResultBlockParam = import('./contentBlocks.js').ToolResultBlockParam
+  export type ThinkingBlockParam = import('./contentBlocks.js').ThinkingBlockParam
+  export type ToolUseBlock = import('./contentBlocks.js').ToolUseBlock
+  export type Tool = { name: string; description?: string; input_schema: Record<string, unknown> }
+  export type ToolChoice = { type: 'auto' | 'any' | 'tool'; name?: string } | 'auto' | 'any'
+
   export namespace Messages {
     export type MessageParam = import('./contentBlocks.js').MessageParam
     export type ContentBlock = import('./contentBlocks.js').ContentBlock
@@ -220,15 +233,21 @@ export namespace CodePilot {
     export type ThinkingBlockParam = import('./contentBlocks.js').ThinkingBlockParam
     export type ToolUseBlock = import('./contentBlocks.js').ToolUseBlock
   }
+
   export namespace Beta {
     export namespace Messages {
       export type BetaContentBlock = import('./contentBlocks.js').BetaContentBlock
       export type BetaToolUseBlock = import('./contentBlocks.js').BetaToolUseBlock
       export type BetaToolUnion = import('./contentBlocks.js').BetaToolUnion
+      export type BetaToolUseBlockParam = import('./contentBlocks.js').ToolUseBlockParam
+      export type BetaToolResultBlockParam = import('./contentBlocks.js').ToolResultBlockParam
       export type BetaMessageParam = import('./contentBlocks.js').BetaMessageParam
       export type BetaMessageStreamParams = import('./contentBlocks.js').BetaMessageStreamParams
       export type BetaUsage = import('./contentBlocks.js').BetaUsage
       export type BetaTool = import('./contentBlocks.js').BetaTool
+      export type BetaMessage = import('./contentBlocks.js').BetaMessage
+      export type BetaJSONOutputFormat = { type: 'json_object' }
+      export type BetaThinkingConfigParam = { type: string; budget_tokens?: number }
     }
   }
 }

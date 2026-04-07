@@ -30,35 +30,11 @@ import { normalizeModelStringForAPI, getSmallFastModel } from '../../utils/model
 import { logForDebugging } from '../../utils/debug.js'
 import { getModelMaxOutputTokens } from '../../utils/context.js'
 import { withVCR } from '../vcr.js'
+import { APIError, APIUserAbortError, APIConnectionTimeoutError } from '../../types/contentBlocks.js'
 
 // Re-export for consumers
-export { EMPTY_USAGE }
+export { EMPTY_USAGE, APIError, APIUserAbortError, APIConnectionTimeoutError }
 export type { NonNullableUsage }
-
-// ── Error classes (kept for compatibility) ────────────────────────────────────
-
-export class APIUserAbortError extends Error {
-  constructor() {
-    super('Request was aborted by the user')
-    this.name = 'APIUserAbortError'
-  }
-}
-
-export class APIError extends Error {
-  status?: number
-  constructor(message: string, status?: number) {
-    super(message)
-    this.name = 'APIError'
-    this.status = status
-  }
-}
-
-export class APIConnectionTimeoutError extends Error {
-  constructor() {
-    super('Connection timed out')
-    this.name = 'APIConnectionTimeoutError'
-  }
-}
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

@@ -468,13 +468,13 @@ export function getAssistantMessageFromError(
     shouldProcessRateLimits(isSubscriber())
   ) {
     // Check if this is the new API with multiple rate limit headers
-    const rateLimitType = error.headers?.get?.(
-      'codepilot-ratelimit-unified-representative-claim',
-    ) as 'five_hour' | 'seven_day' | 'seven_day_opus' | null
+    const rateLimitType = error.headers?.[
+      'codepilot-ratelimit-unified-representative-claim'
+    ] as 'five_hour' | 'seven_day' | 'seven_day_opus' | undefined
 
-    const overageStatus = error.headers?.get?.(
-      'codepilot-ratelimit-unified-overage-status',
-    ) as 'allowed' | 'allowed_warning' | 'rejected' | null
+    const overageStatus = error.headers?.[
+      'codepilot-ratelimit-unified-overage-status'
+    ] as 'allowed' | 'allowed_warning' | 'rejected' | undefined
 
     // If we have the new headers, use the new message generation
     if (rateLimitType || overageStatus) {
@@ -486,9 +486,9 @@ export function getAssistantMessageFromError(
       }
 
       // Extract rate limit information from headers
-      const resetHeader = error.headers?.get?.(
-        'codepilot-ratelimit-unified-reset',
-      )
+      const resetHeader = error.headers?.[
+        'codepilot-ratelimit-unified-reset'
+      ]
       if (resetHeader) {
         limits.resetsAt = Number(resetHeader)
       }
@@ -501,16 +501,16 @@ export function getAssistantMessageFromError(
         limits.overageStatus = overageStatus
       }
 
-      const overageResetHeader = error.headers?.get?.(
-        'codepilot-ratelimit-unified-overage-reset',
-      )
+      const overageResetHeader = error.headers?.[
+        'codepilot-ratelimit-unified-overage-reset'
+      ]
       if (overageResetHeader) {
         limits.overageResetsAt = Number(overageResetHeader)
       }
 
-      const overageDisabledReason = error.headers?.get?.(
-        'codepilot-ratelimit-unified-overage-disabled-reason',
-      ) as OverageDisabledReason | null
+      const overageDisabledReason = error.headers?.[
+        'codepilot-ratelimit-unified-overage-disabled-reason'
+      ] as OverageDisabledReason | undefined
       if (overageDisabledReason) {
         limits.overageDisabledReason = overageDisabledReason
       }
