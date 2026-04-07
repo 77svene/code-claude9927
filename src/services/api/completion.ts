@@ -31,6 +31,7 @@ import { logForDebugging } from '../../utils/debug.js'
 import { getModelMaxOutputTokens } from '../../utils/context.js'
 import { withVCR } from '../vcr.js'
 import { APIError, APIUserAbortError, APIConnectionTimeoutError } from '../../types/contentBlocks.js'
+import { parseJSONWithRepair } from '../../utils/jsonRepair.js'
 
 // Re-export for consumers
 export { EMPTY_USAGE, APIError, APIUserAbortError, APIConnectionTimeoutError }
@@ -557,9 +558,12 @@ async function* queryModel(
 
   for (const [, tc] of toolCalls) {
     let parsedInput: unknown = {}
-    try {
-      parsedInput = JSON.parse(tc.arguments)
-    } catch {
+    const repaired = parseJSONWithRepair(tc.arguments)
+    if (repaired !== null) {
+      parsedInput = repaired
+    } else {
+      // JSON repair failed — give the model a clear error message
+      logForDebugging(`Tool call JSON parse failed for ${tc.name}: ${tc.arguments.slice(0, 200)}`)
       parsedInput = { raw: tc.arguments }
     }
     contentBlocks.push({

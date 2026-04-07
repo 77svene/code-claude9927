@@ -25,9 +25,9 @@ import {
 import { runPostCompactCleanup } from './postCompactCleanup.js'
 import { trySessionMemoryCompaction } from './sessionMemoryCompact.js'
 
-// Reserve this many tokens for output during compaction
-// Based on p99.99 of compact summary output being 17,387 tokens.
-const MAX_OUTPUT_TOKENS_FOR_SUMMARY = 20_000
+// Reserve this many tokens for output during compaction.
+// Reduced from 20K to match small model output limits (4K max).
+const MAX_OUTPUT_TOKENS_FOR_SUMMARY = 4_000
 
 // Returns the context window size minus the max output tokens for the model
 export function getEffectiveContextWindowSize(model: string): number {
@@ -59,10 +59,13 @@ export type AutoCompactTrackingState = {
   consecutiveFailures?: number
 }
 
-export const AUTOCOMPACT_BUFFER_TOKENS = 13_000
-export const WARNING_THRESHOLD_BUFFER_TOKENS = 20_000
-export const ERROR_THRESHOLD_BUFFER_TOKENS = 20_000
-export const MANUAL_COMPACT_BUFFER_TOKENS = 3_000
+// Tuned for 32K context window (small local models).
+// Original values (13K, 20K, 20K, 3K) assumed 200K+ context and caused
+// negative warning thresholds with 32K.
+export const AUTOCOMPACT_BUFFER_TOKENS = 4_000
+export const WARNING_THRESHOLD_BUFFER_TOKENS = 3_000
+export const ERROR_THRESHOLD_BUFFER_TOKENS = 3_000
+export const MANUAL_COMPACT_BUFFER_TOKENS = 1_000
 
 // Stop trying autocompact after this many consecutive failures.
 // BQ 2026-03-10: 1,279 sessions had 50+ consecutive failures (up to 3,272)

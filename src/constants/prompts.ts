@@ -77,13 +77,8 @@ export function getUnameSR(): string {
   return `${osType()} ${osRelease()}`
 }
 
-function getKnowledgeCutoff(modelId: string): string | null {
-  const canonical = getCanonicalName(modelId)
-  if (canonical.includes('codepilot-sonnet-4-6')) return 'August 2025'
-  if (canonical.includes('codepilot-opus-4-6')) return 'May 2025'
-  if (canonical.includes('codepilot-opus-4-5')) return 'May 2025'
-  if (canonical.includes('codepilot-haiku-4')) return 'February 2025'
-  if (canonical.includes('codepilot-opus-4') || canonical.includes('codepilot-sonnet-4')) return 'January 2025'
+function getKnowledgeCutoff(_modelId: string): string | null {
+  // Local models don't have a well-known knowledge cutoff
   return null
 }
 
@@ -255,7 +250,8 @@ Current date: ${getSessionStartDate()}
  - Short status updates at key milestones; surface blockers and decisions that need input.
  - No emojis unless the user asks.
  - Reference code locations as \`file_path:line_number\`.
- - Do not use a colon before tool calls (write "Let me read the file." not "Let me read the file:").${mcpSection}`
+ - Do not use a colon before tool calls (write "Let me read the file." not "Let me read the file:").
+ - IMPORTANT: When calling tools, ensure arguments are valid JSON. Do NOT use trailing commas or single quotes.${mcpSection}`
 
   return [prompt, SYSTEM_PROMPT_DYNAMIC_BOUNDARY]
 }

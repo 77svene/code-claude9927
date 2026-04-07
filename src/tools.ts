@@ -297,6 +297,25 @@ export const getTools = (permissionContext: ToolPermissionContext): Tools => {
     return filterToolsByDenyRules(simpleTools, permissionContext)
   }
 
+  // Local mode: slim tool set optimized for small models (9B params, 32K context).
+  // Keeps only the ~10 tools a small model can reliably use, saving ~6-10K tokens
+  // of tool schema that would otherwise consume the limited context window.
+  // Override with CODEPILOT_ALL_TOOLS=true to use the full tool set.
+  if (!isEnvTruthy(process.env.CODEPILOT_ALL_TOOLS)) {
+    const localTools: Tool[] = [
+      BashTool,
+      FileReadTool,
+      FileEditTool,
+      FileWriteTool,
+      GlobTool,
+      GrepTool,
+      AgentTool,
+      TodoWriteTool,
+      AskUserQuestionTool,
+    ]
+    return filterToolsByDenyRules(localTools, permissionContext)
+  }
+
   // Get all base tools and filter out special tools that get added conditionally
   const specialTools = new Set([
     ListMcpResourcesTool.name,

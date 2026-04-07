@@ -15,7 +15,8 @@ export function getCodePilotClient(): CodePilotClientConfig {
     baseURL: process.env.CODEPILOT_API_BASE ?? 'http://localhost:11434/v1',
     apiKey: process.env.CODEPILOT_API_KEY ?? '',
     model: process.env.CODEPILOT_MODEL ?? 'qwen3.5:9b',
-    timeout: Number(process.env.API_TIMEOUT_MS ?? 120000),
+    // 5 min default: a 9B model generating 4K tokens at 30 tok/s takes ~133s
+    timeout: Number(process.env.API_TIMEOUT_MS ?? 300000),
   }
 }
 
