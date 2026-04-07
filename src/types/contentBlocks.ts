@@ -162,6 +162,36 @@ export class APIError extends Error {
   }
 }
 
+export class APIConnectionError extends Error {
+  constructor(message?: string) {
+    super(message ?? 'Connection error')
+    this.name = 'APIConnectionError'
+  }
+}
+
+export class APIConnectionTimeoutError extends APIConnectionError {
+  constructor(message?: string) {
+    super(message ?? 'Connection timed out')
+    this.name = 'APIConnectionTimeoutError'
+  }
+}
+
+// ── Response types ───────────────────────────────────────────────────────────
+
+export type BetaStopReason = 'end_turn' | 'max_tokens' | 'stop_sequence' | 'tool_use' | string
+
+export type BetaMessage = {
+  id: string
+  type: 'message'
+  role: 'assistant'
+  content: ContentBlock[]
+  model: string
+  stop_reason: BetaStopReason | null
+  stop_sequence: string | null
+  usage: BetaUsage
+  [key: string]: unknown
+}
+
 // ── Client types (for files that import `type CodePilot` or `ClientOptions`) ─
 
 export type ClientOptions = {
