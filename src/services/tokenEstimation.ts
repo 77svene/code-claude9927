@@ -23,7 +23,7 @@ import {
 } from '../utils/model/model.js'
 import { jsonStringify } from '../utils/slowOperations.js'
 import { isToolReferenceBlock } from '../utils/toolSearch.js'
-import { getAPIMetadata, getExtraBodyParams } from './api/codepilot.js'
+import { getAPIMetadata, getExtraBodyParams } from './api/completion.js'
 import { getcodepilotClient } from './api/client.js'
 import { withTokenCountVCR } from './vcr.js'
 

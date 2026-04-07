@@ -1,4 +1,4 @@
-import { queryHaiku } from '../../services/api/codepilot.js'
+import { queryHaiku } from '../../services/api/completion.js'
 import { logError } from '../log.js'
 import { extractTextContent } from '../messages.js'
 import { asSystemPrompt } from '../systemPromptType.js'

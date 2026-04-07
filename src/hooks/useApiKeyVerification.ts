@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import { getIsNonInteractiveSession } from '../bootstrap/state.js'
-import { verifyApiKey } from '../services/api/codepilot.js'
+import { verifyApiKey } from '../services/api/completion.js'
 import {
   getcodepilotApiKeyWithSource,
   getApiKeyFromApiKeyHelper,

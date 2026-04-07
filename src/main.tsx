@@ -141,7 +141,7 @@ import { validateUuid } from './utils/uuid.js';
 import { registerMcpAddCommand } from 'src/commands/mcp/addCommand.js';
 import { registerMcpXaaIdpCommand } from 'src/commands/mcp/xaaIdpCommand.js';
 import { logPermissionContextForAnts } from 'src/services/internalLogging.js';
-import { fetchMcpConfigsIfEligible } from 'src/services/mcp/codepilot.js';
+import { fetchMcpConfigsIfEligible } from 'src/services/mcp/codepilotMcp.js';
 import { clearServerCache } from 'src/services/mcp/client.js';
 import { areMcpConfigsAllowedWithEnterpriseMcpConfig, dedupCodePilotMcpServers, doesEnterpriseMcpConfigExist, filterMcpServersByPolicy, getCodePilotMcpConfigs, getMcpServerSignature, parseMcpConfig, parseMcpConfigFromFilePath } from 'src/services/mcp/config.js';
 import { excludeCommandsByServer, excludeResourcesByServer } from 'src/services/mcp/utils.js';
