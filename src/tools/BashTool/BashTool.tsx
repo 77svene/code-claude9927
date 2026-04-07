@@ -614,10 +614,20 @@ export const BashTool = buildTool({
         backgroundInfo = `Command running in background with ID: ${backgroundTaskId}. Output is being written to: ${outputPath}`;
       }
     }
+    // Contextual hint: tell the model what to do next based on output state
+    let bashHint = ''
+    if (interrupted) {
+      bashHint = '\nNext: command was interrupted. Check partial output or re-run with different parameters.'
+    } else if (errorMessage && !backgroundTaskId) {
+      bashHint = '\nNext: read the error above carefully. Fix the actual cause — do not retry the same command.'
+    } else if (!backgroundTaskId && processedStdout) {
+      bashHint = '\nNext: check the output. If this was a test or build, fix any failures before moving on.'
+    }
+
     return {
       tool_use_id: toolUseID,
       type: 'tool_result',
-      content: [processedStdout, errorMessage, backgroundInfo].filter(Boolean).join('\n'),
+      content: [processedStdout, errorMessage, backgroundInfo, bashHint].filter(Boolean).join('\n'),
       is_error: interrupted
     };
   },

@@ -179,7 +179,7 @@ export const GlobTool = buildTool({
       return {
         tool_use_id: toolUseID,
         type: 'tool_result',
-        content: 'No files found',
+        content: 'No files found.\nNext: try a broader pattern or different path. Do not guess filenames.',
       }
     }
     return {
@@ -192,6 +192,7 @@ export const GlobTool = buildTool({
               '(Results are truncated. Consider using a more specific path or pattern.)',
             ]
           : []),
+        '\nNext: read the most relevant file.',
       ].join('\n'),
     }
   },

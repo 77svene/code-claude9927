@@ -693,12 +693,14 @@ export const FileReadTool = buildTool({
         let content: string
 
         if (data.file.content) {
+          const readHint = '\nNext: now make your edit or answer the question. Do not re-read this file.'
           content =
             memoryFileFreshnessPrefix(data) +
             formatFileLines(data.file) +
             (shouldIncludeFileReadMitigation()
               ? CYBER_RISK_MITIGATION_REMINDER
-              : '')
+              : '') +
+            readHint
         } else {
           // Determine the appropriate warning message
           content =

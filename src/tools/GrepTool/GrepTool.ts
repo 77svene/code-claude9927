@@ -266,10 +266,12 @@ export const GrepTool = buildTool({
   ) {
     if (mode === 'content') {
       const limitInfo = formatLimitInfo(appliedLimit, appliedOffset)
-      const resultContent = content || 'No matches found'
+      const noMatches = !content
+      const resultContent = content || 'No matches found.\nNext: try different search terms or check spelling. Do not guess names.'
+      const hint = noMatches ? '' : '\nNext: you have the code. Make your change or answer the question.'
       const finalContent = limitInfo
-        ? `${resultContent}\n\n[Showing results with pagination = ${limitInfo}]`
-        : resultContent
+        ? `${resultContent}\n\n[Showing results with pagination = ${limitInfo}]${hint}`
+        : resultContent + hint
       return {
         tool_use_id: toolUseID,
         type: 'tool_result',
@@ -296,11 +298,11 @@ export const GrepTool = buildTool({
       return {
         tool_use_id: toolUseID,
         type: 'tool_result',
-        content: 'No files found',
+        content: 'No files found.\nNext: try different search terms or a broader path. Do not guess names.',
       }
     }
     // head_limit has already been applied in call() method, so just show all filenames
-    const result = `Found ${numFiles} ${plural(numFiles, 'file')}${limitInfo ? ` ${limitInfo}` : ''}\n${filenames.join('\n')}`
+    const result = `Found ${numFiles} ${plural(numFiles, 'file')}${limitInfo ? ` ${limitInfo}` : ''}\n${filenames.join('\n')}\nNext: read the most relevant file to understand the code before changing it.`
     return {
       tool_use_id: toolUseID,
       type: 'tool_result',
