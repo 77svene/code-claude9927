@@ -467,8 +467,18 @@ async function* queryModel(
     messages: openaiMessages,
     max_tokens: maxTokens,
     stream: true,
-    temperature: options.temperatureOverride ?? 0.7,
+    // Lower temperature for small models: reduces hallucination and improves
+    // tool call reliability. 0.3 is a good balance for code generation.
+    // Override with CODEPILOT_TEMPERATURE env var.
+    temperature: options.temperatureOverride ?? Number(process.env.CODEPILOT_TEMPERATURE ?? 0.3),
   }
+  // Repetition penalty — prevents small models from getting stuck in loops.
+  // Ollama and llama.cpp support this; OpenAI API ignores unknown fields.
+  const repeatPenalty = Number(process.env.CODEPILOT_REPEAT_PENALTY ?? 1.1)
+  if (repeatPenalty !== 1.0) {
+    body.repeat_penalty = repeatPenalty
+  }
+
   if (toolSchemas.length > 0) {
     body.tools = convertTools(toolSchemas)
   }
