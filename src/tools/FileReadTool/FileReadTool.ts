@@ -735,8 +735,9 @@ export const CYBER_RISK_MITIGATION_REMINDER =
 const MITIGATION_EXEMPT_MODELS = new Set(['codepilot-opus-4-6'])
 
 function shouldIncludeFileReadMitigation(): boolean {
-  const shortName = getCanonicalName(getMainLoopModel())
-  return !MITIGATION_EXEMPT_MODELS.has(shortName)
+  // Disabled for local models — wastes ~50 tokens per file read.
+  // The user controls their own local model and codebase.
+  return false
 }
 
 /**

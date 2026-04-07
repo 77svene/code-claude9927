@@ -227,17 +227,7 @@ isEnvTruthy(process.env.CODEPILOT_DISABLE_BACKGROUND_TASKS);
 const fullInputSchema = lazySchema(() => z.strictObject({
   command: z.string().describe('The command to execute'),
   timeout: semanticNumber(z.number().optional()).describe(`Optional timeout in milliseconds (max ${getMaxTimeoutMs()})`),
-  description: z.string().optional().describe(`Clear, concise description of what this command does in active voice. Never use words like "complex" or "risk" in the description - just describe what it does.
-
-For simple commands (git, npm, standard CLI tools), keep it brief (5-10 words):
-- ls → "List files in current directory"
-- git status → "Show working tree status"
-- npm install → "Install package dependencies"
-
-For commands that are harder to parse at a glance (piped commands, obscure flags, etc.), add enough context to clarify what it does:
-- find . -name "*.tmp" -exec rm {} \\; → "Find and delete all .tmp files recursively"
-- git reset --hard origin/main → "Discard all local changes and match remote main"
-- curl -s url | jq '.data[]' → "Fetch JSON from URL and extract data array elements"`),
+  description: z.string().optional().describe(`Short description of what this command does (5-15 words).`),
   run_in_background: semanticBoolean(z.boolean().optional()).describe(`Set to true to run this command in the background. Use Read to read the output later.`),
   dangerouslyDisableSandbox: semanticBoolean(z.boolean().optional()).describe('Set this to true to dangerously override sandbox mode and run commands without sandboxing.'),
   _simulatedSedEdit: z.object({
@@ -614,14 +604,28 @@ export const BashTool = buildTool({
         backgroundInfo = `Command running in background with ID: ${backgroundTaskId}. Output is being written to: ${outputPath}`;
       }
     }
-    // Contextual hint: tell the model what to do next based on output state
+    // Contextual hint: tell the model what to do next based on output state.
+    // Hints are delivered at the moment they matter — not as rules to memorize.
     let bashHint = ''
     if (interrupted) {
       bashHint = '\nNext: command was interrupted. Check partial output or re-run with different parameters.'
     } else if (errorMessage && !backgroundTaskId) {
-      bashHint = '\nNext: read the error above carefully. Fix the actual cause — do not retry the same command.'
+      // Detect common error patterns for more specific guidance
+      if (errorMessage.includes('command not found') || errorMessage.includes('No such file')) {
+        bashHint = '\nNext: the command or path does not exist. Search for the correct name before retrying.'
+      } else if (errorMessage.includes('Permission denied')) {
+        bashHint = '\nNext: permission denied. Check if the path is correct or if elevated permissions are needed.'
+      } else {
+        bashHint = '\nNext: read the error above carefully. Fix the actual cause — do not retry the same command.'
+      }
     } else if (!backgroundTaskId && processedStdout) {
-      bashHint = '\nNext: check the output. If this was a test or build, fix any failures before moving on.'
+      // Detect test/build output patterns
+      const out = processedStdout.toLowerCase()
+      if (out.includes('fail') || out.includes('error') || out.includes('failed')) {
+        bashHint = '\nNext: there are failures in the output. Read them carefully and fix the issues.'
+      } else if (out.includes('passed') || out.includes('success') || out.includes('ok')) {
+        bashHint = '\nNext: looks good. Continue with the next step or report results to the user.'
+      }
     }
 
     return {
