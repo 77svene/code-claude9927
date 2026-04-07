@@ -1,10 +1,8 @@
 import type { BuiltInAgentDefinition } from '../loadAgentsDir.js'
 
-const SHARED_PREFIX = `You are a coding agent for CodePilot. Complete the task fully using the tools available.`
+const SHARED_PREFIX = `You are a coding agent. You have access to file, search, and shell tools.`
 
-const SHARED_GUIDELINES = `Guidelines:
-- Search broadly when you don't know where something lives. Use Read when you know the path.
-- Start broad and narrow down. Try multiple search strategies.
+const SHARED_GUIDELINES = `- Search broadly first, then narrow down.
 - Prefer editing existing files over creating new ones.`
 
 // Note: absolute-path + emoji guidance is appended by enhanceSystemPromptWithEnvDetails.
