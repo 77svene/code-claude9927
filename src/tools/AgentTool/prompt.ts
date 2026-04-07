@@ -68,6 +68,26 @@ export async function getPrompt(
   isCoordinator?: boolean,
   allowedAgentTypes?: string[],
 ): Promise<string> {
+  // Local mode: drastically reduced prompt to save ~4K tokens.
+  if (!isEnvTruthy(process.env.CODEPILOT_ALL_TOOLS)) {
+    const effectiveAgents = allowedAgentTypes
+      ? agentDefinitions.filter(a => allowedAgentTypes.includes(a.agentType))
+      : agentDefinitions
+    const agentList = effectiveAgents.length > 0
+      ? effectiveAgents.map(a => `- ${a.agentType}: ${a.description || 'general purpose'}`).join('\n')
+      : '- general-purpose: General agent for research and multi-step tasks'
+    return `Launch a sub-agent to handle a task autonomously.
+
+Available agent types:
+${agentList}
+
+Usage:
+- Set subagent_type to pick an agent, or omit for general-purpose.
+- Give a complete task description in the prompt (the agent has no conversation context).
+- Use run_in_background=true for independent tasks.
+- The agent returns a single result message when done.`
+  }
+
   // Filter agents by allowed types when Agent(x,y) restricts which agents can be spawned
   const effectiveAgents = allowedAgentTypes
     ? agentDefinitions.filter(a => allowedAgentTypes.includes(a.agentType))

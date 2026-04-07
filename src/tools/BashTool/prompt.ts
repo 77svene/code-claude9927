@@ -273,6 +273,24 @@ function getSimpleSandboxSection(): string {
 }
 
 export function getSimplePrompt(): string {
+  // Local mode: drastically reduced prompt to save ~5K tokens of context.
+  // Full prompt is 21K chars; this slim version is ~1K chars.
+  if (!isEnvTruthy(process.env.CODEPILOT_ALL_TOOLS)) {
+    return `Executes a bash command and returns its output.
+
+Working directory persists between calls. Shell state does not.
+
+# Rules
+ - Use dedicated tools instead of shell equivalents: Glob (not find), Grep (not grep), Read (not cat), Edit (not sed), Write (not echo >)
+ - Quote paths with spaces. Use absolute paths.
+ - Chain sequential commands with &&. Use ; if failure is OK.
+ - Do NOT use newlines to separate commands.
+ - Timeout: ${getDefaultTimeoutMs()}ms default, ${getMaxTimeoutMs()}ms max.
+ - Use run_in_background for long-running commands.
+ - Git: never skip hooks (--no-verify), never force push without permission, prefer new commits over amend.
+ - Only commit when explicitly asked.`
+  }
+
   // Ant-native builds alias find/grep to embedded bfs/ugrep in CodePilot's shell,
   // so we don't steer away from them (and Glob/Grep tools are removed).
   const embedded = hasEmbeddedSearchTools()
