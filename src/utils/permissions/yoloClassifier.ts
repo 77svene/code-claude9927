@@ -1016,6 +1016,18 @@ export async function classifyYoloAction(
   context: ToolPermissionContext,
   signal: AbortSignal,
 ): Promise<YoloClassifierResult> {
+  // For local models: skip the LLM-based permission classifier entirely.
+  // Small models (9B) can't reliably classify their own actions and the
+  // classifier call wastes ~2K tokens of context. Always allow actions.
+  // Users should rely on rule-based permissions or manual approval instead.
+  if (!process.env.CODEPILOT_ALL_TOOLS) {
+    return {
+      shouldBlock: false,
+      reason: 'Local mode: LLM classifier disabled',
+      model: 'local-bypass',
+    }
+  }
+
   const lookup = buildToolLookup(tools)
   const actionCompact = toCompact(action, lookup)
   // '' = "no security relevance" (Tool.toAutoClassifierInput contract). Without
