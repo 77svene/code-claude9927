@@ -416,18 +416,19 @@ export const FileWriteTool = buildTool({
     }
   },
   mapToolResultToToolResultBlockParam({ filePath, type }, toolUseID) {
+    const verifyHint = '\nNext: read the file back to verify the content, then run tests or build if available.'
     switch (type) {
       case 'create':
         return {
           tool_use_id: toolUseID,
           type: 'tool_result',
-          content: `File created successfully at: ${filePath}`,
+          content: `File created successfully at: ${filePath}${verifyHint}`,
         }
       case 'update':
         return {
           tool_use_id: toolUseID,
           type: 'tool_result',
-          content: `The file ${filePath} has been updated successfully.`,
+          content: `The file ${filePath} has been updated successfully.${verifyHint}`,
         }
     }
   },
